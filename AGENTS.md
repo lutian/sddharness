@@ -1,80 +1,90 @@
-# AGENTS.md — Mapa de navegación para agentes de IA
+# AGENTS.md — Mapa de navegação para agentes de IA
 
-> Este archivo es el **punto de entrada** para cualquier agente que trabaje en este
-> repositorio. NO es una biblia de reglas: es un **mapa**. Lee solo lo que
-> necesites cuando lo necesites (divulgación progresiva).
+> Este arquivo é o **ponto de entrada** para qualquer agente que trabalhe
+> neste repositório. NÃO é uma bíblia de regras: é um **mapa**. Leia só o
+> que precisar quando precisar (divulgação progressiva).
 
 ---
 
-## 1. Antes de empezar (obligatorio)
+## 1. Antes de começar (obrigatório)
 
-1. Ejecuta `./init.sh` y verifica que termina sin errores. Si falla, **para**
-   y resuelve el entorno antes de tocar código.
-2. Lee `progress/current.md` para entender en qué estado quedó la última sesión.
-3. Lee `feature_list.json`. Toda feature nueva (`"sdd": true`) pasa por
-   **Spec Driven Development** — ver `docs/specs.md` y §4 de este archivo.
-4. Lee `docs/specs.md` antes de tocar cualquier spec o feature `sdd: true`.
+1. Execute `./init.sh` e verifique que termina sem erros. Se falhar,
+   **pare** e resolva o ambiente antes de tocar em código.
+2. Leia `progress/current.md` para entender em que estado ficou a última
+   sessão.
+3. Leia `feature_list.json`. Toda feature nova (`"sdd": true`) passa por
+   **Spec Driven Development** — veja `docs/specs.md` e §4 deste arquivo.
+4. Leia `docs/specs.md` antes de tocar em qualquer spec ou feature
+   `sdd: true`.
 
-## 2. Mapa del repositorio
+## 2. Mapa do repositório
 
-| Archivo / carpeta            | Qué contiene                                                                | Cuándo leerlo |
-|------------------------------|-----------------------------------------------------------------------------|---------------|
-| `feature_list.json`          | Lista de tareas con estado (`pending` / `spec_ready` / `in_progress` / `done` / `blocked`) | Siempre, al empezar |
-| `progress/current.md`        | Estado de la sesión actual                                                  | Siempre, al empezar |
-| `progress/history.md`        | Bitácora append-only de sesiones anteriores                                 | Si necesitas contexto histórico |
-| `specs/<feature>/`           | `requirements.md` + `design.md` + `tasks.md` (Kiro-style)                   | Antes de implementar cualquier feature con `"sdd": true` |
-| `docs/architecture.md`       | Qué significa "hacer un buen trabajo" en este proyecto                      | Antes de implementar |
-| `docs/conventions.md`        | Reglas de estilo, nombres, estructura                                       | Antes de escribir código |
-| `docs/specs.md`              | Proceso SDD: EARS notation, los 3 archivos, puerta de aprobación humana     | Antes de redactar o leer un spec |
-| `docs/verification.md`       | Cómo verificar que tu trabajo funciona (incluye trazabilidad requirements)  | Antes de declarar una tarea como `done` |
-| `CHECKPOINTS.md`             | Criterios objetivos de "estado final correcto"                              | Para auto-evaluarte |
-| `.claude/agents/`            | Definiciones de subagentes (`leader`, `spec_author`, `implementer`, `reviewer`) | Si orquestas trabajo |
-| `src/`                       | Código de la aplicación                                                     | Para implementar |
-| `tests/`                     | Tests automáticos                                                           | Para verificar |
+| Arquivo / pasta               | O que contém                                                                 | Quando ler |
+|--------------------------------|-------------------------------------------------------------------------------|------------|
+| `feature_list.json`           | Lista de tarefas com estado (`pending` / `spec_ready` / `in_progress` / `done` / `blocked`) | Sempre, ao começar |
+| `progress/current.md`         | Estado da sessão atual                                                        | Sempre, ao começar |
+| `progress/history.md`         | Diário append-only de sessões anteriores                                     | Se precisar de contexto histórico |
+| `specs/<feature>/`            | `requirements.md` + `design.md` + `tasks.md` (estilo Kiro)                   | Antes de implementar qualquer feature com `"sdd": true` |
+| `docs/architecture.md`        | O que significa "fazer um bom trabalho" neste projeto                        | Antes de implementar |
+| `docs/conventions.md`         | Regras de estilo, nomes, estrutura                                           | Antes de escrever código |
+| `docs/specs.md`                | Processo SDD: notação EARS, os 3 arquivos, portão de aprovação humana        | Antes de redigir ou ler um spec |
+| `docs/verification.md`        | Como verificar que seu trabalho funciona (inclui rastreabilidade requirements) | Antes de declarar uma tarefa como `done` |
+| `CHECKPOINTS.md`               | Critérios objetivos de "estado final correto"                                | Para se autoavaliar |
+| `.claude/agents/`              | Definições de subagentes (`leader`, `spec_author`, `implementer`, `reviewer`) | Se você orquestra trabalho |
+| `src/`                         | Código da aplicação                                                          | Para implementar |
+| `tests/`                       | Testes automáticos                                                           | Para verificar |
 
-## 3. Reglas duras (no negociables)
+## 3. Regras rígidas (não negociáveis)
 
-- **Una sola feature a la vez.** No mezcles cambios de varias tareas en la misma sesión.
-- **No declares una tarea `done` sin pruebas verdes.** Ejecuta `./init.sh` y
-  asegúrate de que el bloque de tests pasa al 100%.
-- **No saltes la fase de spec.** Toda feature con `"sdd": true` debe pasar
-  por `spec_author` y obtener aprobación humana antes de tocar código.
-- **No saltes la puerta de aprobación humana.** El leader detiene el flujo
-  en `spec_ready` y espera.
-- **Documenta lo que haces** en `progress/current.md` mientras trabajas, no al final.
-- **Deja el repositorio limpio** antes de cerrar la sesión (ver §5).
-- **Si no sabes algo, busca en `docs/`** antes de inventarlo.
+- **Uma única feature por vez.** Não misture mudanças de várias tarefas na
+  mesma sessão.
+- **Não declare uma tarefa `done` sem testes verdes.** Execute `./init.sh`
+  e garanta que o bloco de testes passa 100%.
+- **Não pule a fase de spec.** Toda feature com `"sdd": true` deve passar
+  por `spec_author` e obter aprovação humana antes de tocar em código.
+- **Não pule o portão de aprovação humana.** O leader interrompe o fluxo
+  em `spec_ready` e espera.
+- **Documente o que você faz** em `progress/current.md` enquanto trabalha,
+  não no final.
+- **Deixe o repositório limpo** antes de encerrar a sessão (ver §5).
+- **Se não souber algo, procure em `docs/`** antes de inventar.
 
-## 4. Flujo de trabajo (SDD)
+## 4. Fluxo de trabalho (SDD)
 
 ```
 pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [implementer → reviewer] → done
 ```
 
-1. El leader detecta la primera feature `pending` con `"sdd": true`.
-2. El leader lanza `spec_author`, que crea
-   `specs/<name>/{requirements,design,tasks}.md` y marca el status como
+1. O leader detecta a primeira feature `pending` com `"sdd": true`.
+2. O leader lança `spec_author`, que cria
+   `specs/<name>/{requirements,design,tasks}.md` e marca o status como
    `spec_ready`.
-3. **Pausa.** El humano lee el spec en `specs/<name>/` y aprueba (o pide cambios).
-4. Una vez aprobado, el leader cambia el status a `in_progress` y lanza `implementer`.
-5. El implementer ejecuta `tasks.md` una a una, marcándolas `[x]`.
-6. El reviewer verifica trazabilidad `R<n>` ↔ test y tasks completas;
-   aprueba o rechaza.
-7. Si aprueba, el implementer marca `done` y mueve el resumen a
+3. **Pausa.** O humano lê o spec em `specs/<name>/` e aprova (ou pede
+   mudanças).
+4. Uma vez aprovado, o leader muda o status para `in_progress` e lança
+   `implementer`.
+5. O implementer executa `tasks.md` uma a uma, marcando `[x]`.
+6. O reviewer verifica a rastreabilidade `R<n>` ↔ teste e as tasks
+   completas; aprova ou rejeita.
+7. Se aprovar, o implementer marca `done` e move o resumo para
    `progress/history.md`.
 
-## 5. Cierre de sesión (lifecycle)
+## 5. Encerramento de sessão (lifecycle)
 
 Antes de terminar:
 
-1. Ejecuta `./init.sh` — todo verde.
-2. Si la tarea está acabada: marca `status: "done"` en `feature_list.json`.
-3. Mueve el resumen de `progress/current.md` al final de `progress/history.md`.
-4. Vacía `progress/current.md` dejando solo la plantilla.
-5. No dejes archivos temporales, ni `print()` de debug, ni TODOs sin contexto.
+1. Execute `./init.sh` — tudo verde.
+2. Se a tarefa estiver acabada: marque `status: "done"` em
+   `feature_list.json`.
+3. Mova o resumo de `progress/current.md` para o final de
+   `progress/history.md`.
+4. Esvazie `progress/current.md` deixando só o modelo.
+5. Não deixe arquivos temporários, nem `console.log` de debug, nem TODOs
+   sem contexto.
 
-## 6. Si te bloqueas
+## 6. Se você travar
 
-- Relee la sección relevante de `docs/`.
-- Si la herramienta no hace lo que esperas, **no inventes un workaround**:
-  documenta el bloqueo en `progress/current.md` y para la sesión.
+- Releia a seção relevante de `docs/`.
+- Se a ferramenta não fizer o que você espera, **não invente um
+  workaround**: documente o bloqueio em `progress/current.md` e pare a
+  sessão.

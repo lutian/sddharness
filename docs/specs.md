@@ -1,125 +1,132 @@
 # Spec Driven Development (SDD)
 
-> Este proyecto sigue un flujo Kiro-style: requirements → design → tasks → code.
-> El código no se escribe hasta que el spec está aprobado por un humano.
+> Este projeto segue um fluxo estilo Kiro: requirements → design → tasks
+> → code. O código não é escrito até que o spec esteja aprovado por um
+> humano.
 
-## Estructura
+## Estrutura
 
-Cada feature nueva (`"sdd": true` en `feature_list.json`) tiene una carpeta
-dedicada en cuanto deja `pending`:
+Cada feature nova (`"sdd": true` em `feature_list.json`) tem uma pasta
+dedicada assim que sai de `pending`:
 
 ```
 specs/<feature-name>/
-├── requirements.md   # QUÉ se necesita (EARS notation)
-├── design.md         # CÓMO se construirá (decisiones técnicas)
-└── tasks.md          # PASOS concretos a implementar
+├── requirements.md   # O QUÊ é necessário (notação EARS)
+├── design.md         # COMO será construído (decisões técnicas)
+└── tasks.md          # PASSOS concretos a implementar
 ```
 
-El `feature-name` coincide con el campo `name` de `feature_list.json`.
+O `feature-name` coincide com o campo `name` de `feature_list.json`.
 
-## Estados de una feature
+## Estados de uma feature
 
-| Estado         | Significado                                                    |
-|----------------|----------------------------------------------------------------|
-| `pending`      | Sin spec. El `spec_author` es el primero en actuar.            |
-| `spec_ready`   | Spec drafted. Esperando aprobación humana. NO se toca código.  |
-| `in_progress`  | Spec aprobado. `implementer` trabajando.                       |
-| `done`         | Código verde, `reviewer` aprobó, sesión cerrada.               |
-| `blocked`      | Atascado. Razón en `progress/current.md`.                      |
+| Estado         | Significado                                                     |
+|----------------|-------------------------------------------------------------------|
+| `pending`      | Sem spec. O `spec_author` é o primeiro a agir.                   |
+| `spec_ready`   | Spec redigido. Aguardando aprovação humana. NÃO se toca código.  |
+| `in_progress`  | Spec aprovado. `implementer` trabalhando.                        |
+| `done`         | Código verde, `reviewer` aprovou, sessão fechada.                |
+| `blocked`      | Travado. Motivo em `progress/current.md`.                        |
 
-## La puerta de aprobación humana
+## O portão de aprovação humana
 
-El flujo automático se detiene **una vez**: cuando el `spec_author` termina
-sus tres archivos, marca la feature como `spec_ready` y para. El humano
-lee `specs/<feature>/` y dice "aprobado" (o pide cambios).
+O fluxo automático para **uma vez**: quando o `spec_author` termina seus
+três arquivos, marca a feature como `spec_ready` e para. O humano lê
+`specs/<feature>/` e diz "aprovado" (ou pede mudanças).
 
-Solo entonces el `leader` transiciona `spec_ready → in_progress` y lanza
-el `implementer`.
+Só então o `leader` transiciona `spec_ready → in_progress` e lança o
+`implementer`.
 
 ```
 pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [implementer → reviewer] → done
 ```
 
-## requirements.md — EARS estricto
+## requirements.md — EARS estrito
 
-Las requirements se redactan en **EARS** (Easy Approach to Requirements
-Syntax). Cada requirement es un párrafo numerado con uno de estos cinco
-patrones:
+As requirements são redigidas em **EARS** (Easy Approach to Requirements
+Syntax). Cada requirement é um parágrafo numerado com um destes cinco
+padrões:
 
-| Patrón         | Plantilla                                                   |
-|----------------|-------------------------------------------------------------|
-| **Ubicuo**     | `El sistema DEBE <acción>.`                                 |
-| **Evento**     | `CUANDO <disparador>, el sistema DEBE <acción>.`            |
-| **Estado**     | `MIENTRAS <estado>, el sistema DEBE <acción>.`              |
-| **Opcional**   | `DONDE <feature opcional>, el sistema DEBE <acción>.`       |
-| **No deseado** | `SI <evento no deseado> ENTONCES el sistema DEBE <acción>.` |
+| Padrão          | Modelo                                                        |
+|------------------|-------------------------------------------------------------------|
+| **Ubíquo**       | `O sistema DEVE <ação>.`                                          |
+| **Evento**       | `QUANDO <gatilho>, o sistema DEVE <ação>.`                        |
+| **Estado**       | `ENQUANTO <estado>, o sistema DEVE <ação>.`                       |
+| **Opcional**     | `ONDE <feature opcional>, o sistema DEVE <ação>.`                 |
+| **Indesejado**   | `SE <evento indesejado> ENTÃO o sistema DEVE <ação>.`             |
 
-Reglas duras:
+Regras rígidas:
 
-- Cada requirement tiene un id estable: `R1`, `R2`, ...
-- Cada requirement DEBE ser verificable por al menos un test concreto.
-- No mezcles varios `DEBE` en un mismo requirement. Si hay más de uno, parte.
-- No uses verbos blandos ("podría", "puede", "soporta"). Solo `DEBE` / `NO DEBE`.
+- Cada requirement tem um id estável: `R1`, `R2`, ...
+- Cada requirement DEVE ser verificável por pelo menos um teste concreto.
+- Não misture vários `DEVE` no mesmo requirement. Se houver mais de um,
+  divida.
+- Não use verbos brandos ("poderia", "pode", "suporta"). Só `DEVE` /
+  `NÃO DEVE`.
 
-Ejemplo:
+Exemplo:
 
 ```markdown
 ## R1
-CUANDO el usuario ejecuta `python -m src.cli recent`, el sistema DEBE
-imprimir hasta 5 notas ordenadas por `created_at` descendente.
+QUANDO `openDatabase(path)` é chamado e o arquivo SQLite não existe, o
+sistema DEVE criar o arquivo com as tabelas `clientes`, `sessoes` e
+`pedidos`.
 
 ## R2
-SI el flag `--limit` recibe un valor <= 0 ENTONCES el sistema DEBE
-imprimir un mensaje de error en stderr y salir con código != 0.
+SE for tentada a inserção de um cliente com um `telefone` já existente
+ENTÃO o sistema DEVE lançar `DatabaseError` e NÃO DEVE modificar a linha
+existente.
 ```
 
-## design.md — decisiones técnicas
+## design.md — decisões técnicas
 
-Captura **antes** de tocar código:
+Capture **antes** de tocar em código:
 
-- Qué archivos se crean / modifican.
-- Qué firmas nuevas aparecen (funciones, clases, comandos).
-- Qué excepciones se reutilizan o se añaden.
-- Qué alternativa se descartó y por qué (mínimo una).
+- Quais arquivos são criados / modificados.
+- Quais assinaturas novas aparecem (funções, classes, comandos).
+- Quais exceções são reutilizadas ou adicionadas.
+- Qual alternativa foi descartada e por quê (no mínimo uma).
 
-NO es ingeniería desde primeros principios — apóyate en
-`docs/architecture.md` y `docs/conventions.md`. El `design.md` documenta los
-puntos donde tu feature roza la frontera de esas reglas.
+NÃO é engenharia a partir de primeiros princípios — apoie-se em
+`docs/architecture.md` e `docs/conventions.md`. O `design.md` documenta
+os pontos onde sua feature toca a fronteira dessas regras.
 
-## tasks.md — checklist ejecutable
+## tasks.md — checklist executável
 
-Pasos discretos en orden, cada uno con checkbox. Cada task referencia al
-menos un `R<n>` que cubre.
+Passos discretos em ordem, cada um com checkbox. Cada task referencia
+pelo menos um `R<n>` que cobre.
 
-Ejemplo:
+Exemplo:
 
 ```markdown
-- [ ] T1 — Añadir `cmd_recent` en `src/cli.py`. Cubre: R1, R3.
-- [ ] T2 — Registrar subparser `recent` con flag `--limit`. Cubre: R1, R2.
-- [ ] T3 — Añadir `test_recent_default_limit` en `tests/test_cli.py`. Cubre: R1.
-- [ ] T4 — Añadir `test_recent_invalid_limit` en `tests/test_cli.py`. Cubre: R2.
+- [ ] T1 — Adicionar `openDatabase(path)` em `src/db/index.js`. Cobre: R1.
+- [ ] T2 — Adicionar `insertCliente(db, cliente)` com `UNIQUE` em `telefone`. Cobre: R2.
+- [ ] T3 — Adicionar teste `"cria o arquivo SQLite se não existir"` em
+      `tests/database.test.js`. Cobre: R1.
+- [ ] T4 — Adicionar teste `"rejeita um telefone duplicado em clientes"` em
+      `tests/database.test.js`. Cobre: R2.
 ```
 
-El `implementer` marca `[x]` cada task al completarla. El `reviewer`
-rechaza si queda alguna `[ ]` sin justificación documentada.
+O `implementer` marca `[x]` cada task ao completá-la. O `reviewer`
+rejeita se sobrar alguma `[ ]` sem justificativa documentada.
 
-## Trazabilidad (regla dura)
+## Rastreabilidade (regra rígida)
 
-- Cada test en `tests/` debe poder mapearse a un `R<n>` de su spec.
-- Cada `R<n>` debe tener al menos un test concreto.
-- El `reviewer` comprueba esta correspondencia explícitamente y rechaza
-  si falta.
+- Cada teste em `tests/` deve poder ser mapeado a um `R<n>` do seu spec.
+- Cada `R<n>` deve ter pelo menos um teste concreto.
+- O `reviewer` verifica essa correspondência explicitamente e rejeita se
+  faltar.
 
-El `implementer` documenta el mapa en `progress/impl_<name>.md`:
+O `implementer` documenta o mapa em `progress/impl_<name>.md`:
 
 ```markdown
-## Trazabilidad
-- R1 → `test_recent_default_limit`
-- R2 → `test_recent_invalid_limit`
-- R3 → `test_recent_custom_limit`
+## Rastreabilidade
+- R1 → `"cria o arquivo SQLite se não existir"`
+- R2 → `"rejeita um telefone duplicado em clientes"`
+- R3 → `"mantém apenas a sessão mais recente por cliente"`
 ```
 
-## Cuándo NO aplica SDD
+## Quando o SDD NÃO se aplica
 
-Las features con `"sdd": false` o sin el campo `sdd` (las legacy 1–6) NO
-tienen spec. SDD solo se aplica hacia adelante.
+Features com `"sdd": false` ou sem o campo `sdd` NÃO têm spec. SDD só se
+aplica dali em diante.

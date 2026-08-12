@@ -1,136 +1,143 @@
-# ejemplo-harness — Notes CLI
+# pizzaria-whatsapp-delivery-desktop
 
-Proyecto de ejemplo que demuestra los principios de **Harness Engineering**
-aplicados a un CLI minimalista de notas en Python.
+Aplicativo desktop em Electron/Node.js para automatizar o atendimento de
+delivery via WhatsApp Web com IA generativa (OpenAI/DeepSeek), Whisper,
+transcrição de imagens, gestão de cardápio via JSON e painel de pedidos
+KDS (React). Serve também como exemplo de **Harness Engineering**.
 
-> El código de la aplicación es deliberadamente simple. Lo importante de
-> este repo no es **qué** hace, sino **cómo** está estructurado para que un
-> agente de IA pueda trabajar sobre él de forma autónoma y verificable.
+> O importante deste repo não é só **o quê** o app faz, mas **como** o
+> arnês está estruturado para que um agente de IA possa trabalhar sobre
+> ele de forma autônoma e verificável.
 
-## Cómo está organizado el arnés
+## Como o arnês está organizado
 
-| Pilar                                  | Manifestación en este repo                                                       |
-|----------------------------------------|----------------------------------------------------------------------------------|
-| **1. El repositorio ES el sistema**    | `AGENTS.md`, `init.sh`, `feature_list.json`, `specs/`, `progress/`, `docs/`      |
-| **2. Orquestación multi-agente**       | `.claude/agents/leader.md`, `spec_author.md`, `implementer.md`, `reviewer.md`    |
-| **3. Spec Driven Development**         | `docs/specs.md`, EARS notation, puerta de aprobación humana en `spec_ready`      |
-| **4. Supervisión y mejora**            | `CHECKPOINTS.md`, hooks en `.claude/settings.json`, `tests/`                     |
+| Pilar                                    | Manifestação neste repo                                                        |
+|--------------------------------------------|------------------------------------------------------------------------------------|
+| **1. O repositório É o sistema**          | `AGENTS.md`, `init.sh`, `feature_list.json`, `specs/`, `progress/`, `docs/`      |
+| **2. Orquestração multi-agente**          | `.claude/agents/leader.md`, `spec_author.md`, `implementer.md`, `reviewer.md`     |
+| **3. Spec Driven Development**            | `docs/specs.md`, notação EARS, portão de aprovação humana em `spec_ready`         |
+| **4. Supervisão e melhoria**              | `CHECKPOINTS.md`, hooks em `.claude/settings.json`, `tests/`                      |
 
-## Para empezar
+## Para começar
 
 ```bash
 ./init.sh
 ```
 
-Si todo está verde, abre `AGENTS.md` y sigue desde ahí.
+Se tudo estiver verde, abra `AGENTS.md` e siga a partir dali.
 
-## Para usar la app (humanos)
+## Para usar o app (humanos)
 
 ```bash
-python3 -m src.cli add "comprar pan" --body "y leche"
-python3 -m src.cli list
+npm install
+npm run dev      # Electron em modo desenvolvimento
 ```
 
-## Probarlo tú mismo con Claude Code
+## Testar você mesmo com Claude Code
 
-Si te descargas el repo y abres Claude Code en la raíz, ya estás dentro del
-arnés: `CLAUDE.md` fuerza al modelo a actuar como `leader` (orquesta, no
-edita código) y `docs/specs.md` impone el flujo Spec Driven Development.
+Se você baixar o repo e abrir o Claude Code na raiz, já está dentro do
+arnês: `CLAUDE.md` obriga o modelo a atuar como `leader` (orquestra, não
+edita código) e `docs/specs.md` impõe o fluxo Spec Driven Development.
 
-Receta rápida:
+Receita rápida:
 
-1. `./init.sh` — debe terminar verde.
-2. Abre `feature_list.json` y deja al menos una feature con
-   `status: "pending"` y `"sdd": true`. La #7 `cli_recent` ya está así.
-3. Lanza Claude Code en la raíz del repo: `claude`.
-4. Pídele: **«implementa la siguiente feature pendiente»**.
+1. `./init.sh` — deve terminar verde.
+2. Abra `feature_list.json` e deixe pelo menos uma feature com
+   `status: "pending"` e `"sdd": true`. A #2 `feature-2` já está assim
+   (a #1 `feature-1` já passou pelo spec).
+3. Lance o Claude Code na raiz do repo: `claude`.
+4. Peça: **«implementa a próxima feature pendente»**.
 
-Lo que ocurre, en dos fases:
+O que acontece, em duas fases:
 
-**Fase 1 — Spec.** El `leader` lanza un `spec_author` que escribe
-`specs/<feature>/{requirements.md, design.md, tasks.md}` y deja la feature
-en `spec_ready`. Luego **para y te pide aprobación**.
+**Fase 1 — Spec.** O `leader` lança um `spec_author` que escreve
+`specs/<feature>/{requirements.md, design.md, tasks.md}` e deixa a
+feature em `spec_ready`. Depois **para e pede sua aprovação**.
 
-Tú lees los tres archivos en tu editor:
+Você lê os três arquivos no seu editor:
 
-- `requirements.md` — qué debe hacer la feature, en EARS estricto.
-- `design.md` — decisiones técnicas antes de escribir código.
-- `tasks.md` — checklist de pasos discretos a ejecutar.
+- `requirements.md` — o que a feature deve fazer, em EARS estrito.
+- `design.md` — decisões técnicas antes de escrever código.
+- `tasks.md` — checklist de passos discretos a executar.
 
-Cuando estés conforme, dices al chat «aprobado» (o pides cambios).
+Quando estiver de acordo, diga no chat «aprovado» (ou peça mudanças).
 
-**Fase 2 — Código.** El `leader` transiciona la feature a `in_progress` y
-lanza `implementer` (sigue las tasks una a una marcándolas `[x]`) y
-después `reviewer` (verifica trazabilidad `R<n>` ↔ test y todas las tasks
+**Fase 2 — Código.** O `leader` transiciona a feature para `in_progress`
+e lança `implementer` (segue as tasks uma a uma marcando `[x]`) e depois
+`reviewer` (verifica rastreabilidade `R<n>` ↔ teste e todas as tasks
 completas).
 
-Dónde queda la traza de cada subagente:
+Onde fica o rastro de cada subagente:
 
-| Archivo                                  | Quién lo escribe   | Qué contiene                                                  |
-|------------------------------------------|--------------------|---------------------------------------------------------------|
-| `specs/<feature>/requirements.md`        | spec_author        | EARS requirements numeradas `R1`, `R2`, ...                  |
-| `specs/<feature>/design.md`              | spec_author        | Decisiones técnicas + alternativa descartada                  |
-| `specs/<feature>/tasks.md`               | spec_author        | Checklist; el implementer la va marcando `[x]`                |
-| `progress/current.md`                    | leader             | Plan vivo de la sesión                                        |
-| `progress/impl_<feature>.md`             | implementer        | Archivos tocados + mapa `R<n> → test` + output de los tests   |
-| `progress/review_<feature>.md`           | reviewer           | Checklist contra `docs/`, `specs/<feature>/` y `CHECKPOINTS.md` |
-| `feature_list.json`                      | leader/implementer | `pending` → `spec_ready` → `in_progress` → `done`             |
-| `progress/history.md`                    | leader             | Resumen append-only al cerrar la sesión                       |
+| Arquivo                                    | Quem escreve         | O que contém                                                     |
+|-----------------------------------------------|------------------------|----------------------------------------------------------------------|
+| `specs/<feature>/requirements.md`             | spec_author            | Requirements EARS numeradas `R1`, `R2`, ...                       |
+| `specs/<feature>/design.md`                   | spec_author            | Decisões técnicas + alternativa descartada                        |
+| `specs/<feature>/tasks.md`                    | spec_author            | Checklist; o implementer vai marcando `[x]`                       |
+| `progress/current.md`                         | leader                 | Plano vivo da sessão                                              |
+| `progress/impl_<feature>.md`                  | implementer            | Arquivos tocados + mapa `R<n> → teste` + saída dos testes         |
+| `progress/review_<feature>.md`                | reviewer               | Checklist contra `docs/`, `specs/<feature>/` e `CHECKPOINTS.md`    |
+| `feature_list.json`                           | leader/implementer     | `pending` → `spec_ready` → `in_progress` → `done`                 |
+| `progress/history.md`                         | leader                 | Resumo append-only ao fechar a sessão                              |
 
-Abre `specs/` y `progress/` en tu editor mientras Claude trabaja: cada
-informe aparece en cuanto el subagente termina. Esa es la regla
-anti-teléfono-descompuesto en acción — el contenido no circula por chat,
-vive en disco y queda versionado.
+Abra `specs/` e `progress/` no seu editor enquanto o Claude trabalha:
+cada relatório aparece assim que o subagente termina. Essa é a regra
+anti-telefone-sem-fio em ação — o conteúdo não circula pelo chat, vive
+em disco e fica versionado.
 
-## Estructura
+## Estrutura
 
 ```
 .
-├── AGENTS.md              # Mapa para agentes (divulgación progresiva)
-├── CHECKPOINTS.md         # Criterios de "estado final correcto"
-├── feature_list.json      # Alcance: una feature a la vez
-├── init.sh                # Verificación e inicialización
-├── specs/<feature>/       # Spec por feature (Kiro-style)
-│   ├── requirements.md    # EARS notation
-│   ├── design.md          # Decisiones técnicas
-│   └── tasks.md           # Checklist de implementación
+├── AGENTS.md              # Mapa para agentes (divulgação progressiva)
+├── CHECKPOINTS.md         # Critérios de "estado final correto"
+├── feature_list.json      # Escopo: uma feature por vez
+├── init.sh                # Verificação e inicialização
+├── specs/<feature>/       # Spec por feature (estilo Kiro)
+│   ├── requirements.md    # Notação EARS
+│   ├── design.md          # Decisões técnicas
+│   └── tasks.md           # Checklist de implementação
 ├── progress/
-│   ├── current.md         # Sesión activa (estado vivo)
-│   └── history.md         # Bitácora append-only
+│   ├── current.md         # Sessão ativa (estado vivo)
+│   └── history.md         # Diário append-only
 ├── docs/
-│   ├── architecture.md    # Qué significa "buen trabajo"
-│   ├── conventions.md     # Estilo, nombres, errores
-│   ├── specs.md           # Proceso SDD: EARS, 3 archivos, aprobación humana
-│   └── verification.md    # Cómo demostrar que funciona
+│   ├── architecture.md    # O que significa "bom trabalho"
+│   ├── conventions.md     # Estilo, nomes, erros
+│   ├── specs.md           # Processo SDD: EARS, 3 arquivos, aprovação humana
+│   └── verification.md    # Como demonstrar que funciona
 ├── .claude/
 │   ├── agents/            # leader, spec_author, implementer, reviewer
-│   └── settings.json      # Hooks que automatizan la verificación
+│   └── settings.json      # Hooks que automatizam a verificação
+├── electron/
+│   └── main.js             # Processo main: inicialização, janela, IPC
 ├── src/
-│   ├── storage.py         # Persistencia atómica (JSON)
-│   ├── notes.py           # Modelo de dominio
-│   └── cli.py             # Interfaz argparse
+│   ├── db/                 # Persistência SQLite
+│   ├── menu/                # Cardápio e configuração global
+│   ├── whatsapp/            # Cliente WhatsApp Web + fila FIFO
+│   ├── ai/                  # Orquestração OpenAI/DeepSeek, Whisper, visão
+│   ├── delivery/            # Geocodificação Nominatim + tempo de espera
+│   └── ui/                  # Painel React (KDS), renderer process
 └── tests/
-    ├── test_storage.py
-    ├── test_notes.py
-    └── test_cli.py
+    └── *.test.js            # Um arquivo por domínio (Vitest)
 ```
 
-## Aprendizajes que ilustra este proyecto
+## Aprendizados que este projeto ilustra
 
-- **Divulgación progresiva** en `AGENTS.md`: el agente no recibe todas las
-  reglas de golpe, recibe un mapa para buscarlas bajo demanda.
-- **Una feature a la vez** validado por `init.sh` (rechaza más de un
-  `in_progress` en `feature_list.json`).
-- **Spec Driven Development** estilo Kiro: requirements (EARS) → design →
-  tasks → code, con una puerta de aprobación humana antes de tocar código.
-- **Estado en disco**, no en chat: `specs/`, `progress/current.md` y
-  `history.md` sobreviven a reinicios y context windows reventadas.
-- **Verificación ejecutable**: `init.sh` corre los tests reales y valida
-  la presencia de specs para toda feature SDD.
-- **Trazabilidad obligatoria**: cada `R<n>` se mapea a un test concreto;
-  el reviewer rechaza si falta.
-- **Patrón Leader-Spec-Implementer-Reviewer**: el leader no implementa,
-  el spec_author no codifica, el implementer no se autoaprueba, el
-  reviewer no edita código.
-- **Anti teléfono-descompuesto**: los subagentes escriben sus resultados
-  en archivos y solo devuelven una referencia ligera.
+- **Divulgação progressiva** em `AGENTS.md`: o agente não recebe todas as
+  regras de uma vez, recebe um mapa para buscá-las sob demanda.
+- **Uma feature por vez** validado por `init.sh` (rejeita mais de um
+  `in_progress` em `feature_list.json`).
+- **Spec Driven Development** estilo Kiro: requirements (EARS) → design
+  → tasks → code, com um portão de aprovação humana antes de tocar em
+  código.
+- **Estado em disco**, não no chat: `specs/`, `progress/current.md` e
+  `history.md` sobrevivem a reinícios e context windows estouradas.
+- **Verificação executável**: `init.sh` roda os testes reais e valida a
+  presença de specs para toda feature SDD.
+- **Rastreabilidade obrigatória**: cada `R<n>` é mapeado a um teste
+  concreto; o reviewer rejeita se faltar.
+- **Padrão Leader-Spec-Implementer-Reviewer**: o leader não implementa,
+  o spec_author não codifica, o implementer não se autoaprova, o
+  reviewer não edita código.
+- **Anti telefone-sem-fio**: os subagentes escrevem seus resultados em
+  arquivos e só devolvem uma referência leve.

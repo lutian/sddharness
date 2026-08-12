@@ -1,20 +1,21 @@
-# Sesión actual
+# Sessão atual
 
-> Este archivo se vacía al cerrar cada sesión y se mueve a `history.md`.
-> Mientras trabajas, **mantenlo actualizado en tiempo real**, no al final.
+> Este arquivo é esvaziado ao fechar cada sessão e movido para
+> `history.md`. Enquanto trabalha, **mantenha-o atualizado em tempo
+> real**, não só no final.
 
-- **Feature en curso:** _ninguna_
-- **Inicio:** _—_
-- **Agente:** _—_
+- **Feature em andamento:** nenhuma
+- **Agente:** —
+- **Status:** —
 
-## Plan
+## Plano
 
-_—_
+(nenhum)
 
 ## Bitácora
 
-_—_
+(nenhuma)
 
-## Próximo paso
+## Próximo passo
 
-_—_
+Restante na fila: feature-8 e feature-14 (`pending`).

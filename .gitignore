@@ -1,7 +1,10 @@
-__pycache__/
-*.py[cod]
-.notes.json
-.notes_*.json
+node_modules/
+dist/
+out/
+*.sqlite
+*.sqlite-journal
+.env
+.wwebjs_auth/
+.wwebjs_cache/
 *.tmp
 .DS_Store
-.venv/

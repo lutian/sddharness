@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# init.sh — Verificación e inicialización del entorno
+# init.sh — Verificação e inicialização do ambiente
 #
-# Este script lo ejecuta el agente al COMENZAR una sesión y antes de
-# declarar cualquier tarea como `done`. Si falla, la sesión no debe avanzar.
+# Este script é executado pelo agente ao COMEÇAR uma sessão e antes de
+# declarar qualquer tarefa como `done`. Se falhar, a sessão não deve avançar.
 #
-# Salida esperada: códigos de salida claros y bloques marcados con [OK]/[FAIL].
+# Saída esperada: códigos de saída claros e blocos marcados com [OK]/[FAIL].
 
 set -u
 RED='\033[0;31m'
@@ -18,29 +18,35 @@ fail()  { printf "${RED}[FAIL]${NC}  %s\n" "$1"; }
 
 EXIT_CODE=0
 
-echo "── 1. Verificando entorno ─────────────────────────────"
+echo "── 1. Verificando ambiente ─────────────────────────────"
 
-# Python disponible
-if ! command -v python3 >/dev/null 2>&1; then
-  fail "python3 no está instalado"
+# Node disponível
+if ! command -v node >/dev/null 2>&1; then
+  fail "node não está instalado"
   exit 1
 fi
-ok "python3 -> $(python3 --version)"
+ok "node -> $(node --version)"
 
-# Versión mínima 3.9 (dataclasses + typing moderno)
-PY_VERSION_OK=$(python3 -c 'import sys; print(int(sys.version_info >= (3, 9)))')
-if [ "$PY_VERSION_OK" != "1" ]; then
-  fail "Se requiere Python >= 3.9"
+# Versão mínima 20 (ESM estável, fetch global)
+NODE_VERSION_OK=$(node -e 'process.stdout.write(process.versions.node.split(".")[0] >= 20 ? "1" : "0")')
+if [ "$NODE_VERSION_OK" != "1" ]; then
+  fail "É necessário Node.js >= 20"
   exit 1
 fi
-ok "Versión de Python compatible"
+ok "Versão de Node.js compatível"
+
+if ! command -v npm >/dev/null 2>&1; then
+  fail "npm não está instalado"
+  exit 1
+fi
+ok "npm -> $(npm --version)"
 
 echo ""
-echo "── 2. Verificando archivos base del arnés ──────────────"
+echo "── 2. Verificando arquivos base do arnês ──────────────"
 
 for f in AGENTS.md feature_list.json progress/current.md docs/architecture.md docs/conventions.md docs/verification.md CHECKPOINTS.md; do
   if [ ! -f "$f" ]; then
-    fail "Falta archivo base: $f"
+    fail "Falta arquivo base: $f"
     EXIT_CODE=1
   else
     ok "Existe $f"
@@ -48,67 +54,44 @@ for f in AGENTS.md feature_list.json progress/current.md docs/architecture.md do
 done
 
 echo ""
-echo "── 3. Validando feature_list.json y specs ─────────────"
+echo "── 3. Validando feature_list.json e specs ─────────────"
 
-python3 - <<'PY'
-import json, os, sys
-try:
-    data = json.load(open("feature_list.json"))
-    valid = {"pending", "spec_ready", "in_progress", "done", "blocked"}
-    in_progress = [f for f in data["features"] if f["status"] == "in_progress"]
-    if len(in_progress) > 1:
-        print(f"[FAIL]  Hay {len(in_progress)} features en in_progress (máximo 1)")
-        sys.exit(1)
-    requires_spec = {"spec_ready", "in_progress", "done"}
-    spec_errors = []
-    for f in data["features"]:
-        if f["status"] not in valid:
-            print(f"[FAIL]  Estado inválido en feature {f['id']}: {f['status']}")
-            sys.exit(1)
-        if f.get("sdd") and f["status"] in requires_spec:
-            spec_dir = os.path.join("specs", f["name"])
-            for fname in ("requirements.md", "design.md", "tasks.md"):
-                if not os.path.isfile(os.path.join(spec_dir, fname)):
-                    spec_errors.append(
-                        f"feature {f['id']} ({f['name']}) en {f['status']} "
-                        f"sin {spec_dir}/{fname}"
-                    )
-    if spec_errors:
-        for e in spec_errors:
-            print(f"[FAIL]  {e}")
-        sys.exit(1)
-    print(f"[OK]    feature_list.json válido ({len(data['features'])} features)")
-    print(f"[OK]    Specs presentes para features sdd con estado no-pending")
-except SystemExit:
-    raise
-except Exception as e:
-    print(f"[FAIL]  feature_list.json o specs inválidos: {e}")
-    sys.exit(1)
-PY
-
-if [ $? -ne 0 ]; then EXIT_CODE=1; fi
-
-echo ""
-echo "── 4. Ejecutando tests ─────────────────────────────────"
-
-if [ -d "tests" ]; then
-  if python3 -m unittest discover -s tests -v 2>&1; then
-    ok "Todos los tests pasan"
-  else
-    fail "Hay tests rotos"
-    EXIT_CODE=1
-  fi
+if node scripts/validate-features.mjs; then
+  :
 else
-  warn "Carpeta tests/ no existe todavía"
+  EXIT_CODE=1
 fi
 
 echo ""
-echo "── 5. Resumen ──────────────────────────────────────────"
+echo "── 4. Executando testes ─────────────────────────────────"
+
+if [ -f "package.json" ]; then
+  if [ ! -d "node_modules" ]; then
+    warn "node_modules ausente, executando npm install"
+    npm install --silent || { fail "npm install falhou"; EXIT_CODE=1; }
+  fi
+  TEST_FILE_COUNT=$(find tests -type f -name "*.test.js" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$TEST_FILE_COUNT" -eq 0 ]; then
+    warn "Ainda não há arquivos tests/*.test.js"
+  else
+    if npm test --silent; then
+      ok "Todos os testes passam"
+    else
+      fail "Há testes quebrados"
+      EXIT_CODE=1
+    fi
+  fi
+else
+  warn "package.json ainda não existe"
+fi
+
+echo ""
+echo "── 5. Resumo ──────────────────────────────────────────"
 
 if [ $EXIT_CODE -eq 0 ]; then
-  ok "Entorno listo. Puedes empezar a trabajar."
+  ok "Ambiente pronto. Você pode começar a trabalhar."
 else
-  fail "Entorno NO está listo. Resuelve los errores antes de avanzar."
+  fail "Ambiente NÃO está pronto. Resolva os erros antes de avançar."
 fi
 
 exit $EXIT_CODE
