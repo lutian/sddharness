@@ -125,7 +125,7 @@
         "tests/desktop-build.test.js valida a integridade do empacotamento e inicialização do executável."
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 9,
@@ -210,7 +210,7 @@
         "tests/electron-main.test.js valida a lógica de inicialização e ligação dos módulos (composition root), isolando o runtime real do Electron."
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

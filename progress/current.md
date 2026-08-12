@@ -1,21 +1,20 @@
 # Sessão atual
 
-> Este arquivo é esvaziado ao fechar cada sessão e movido para
-> `history.md`. Enquanto trabalha, **mantenha-o atualizado em tempo
-> real**, não só no final.
-
 - **Feature em andamento:** nenhuma
 - **Agente:** —
-- **Status:** —
+- **Status:** backlog encerrado — todas as features `sdd: true`
+  (feature-1 a feature-14) estão `done` em `feature_list.json`.
 
 ## Plano
 
-(nenhum)
+Nenhum. Aguardando novas features serem adicionadas a `feature_list.json`
+antes de iniciar uma nova sessão de spec/implementação.
 
 ## Bitácora
 
-(nenhuma)
+- Ver `progress/history.md` para o histórico completo de todas as
+  sessões e features concluídas.
 
 ## Próximo passo
 
-Restante na fila: feature-8 e feature-14 (`pending`).
+Nenhum item pendente no backlog atual.
