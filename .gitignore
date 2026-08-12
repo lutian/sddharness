@@ -8,3 +8,4 @@ out/
 .wwebjs_cache/
 *.tmp
 .DS_Store
+/tmp/

@@ -1,143 +1,219 @@
-# pizzaria-whatsapp-delivery-desktop
+# sddharness
 
-Aplicativo desktop em Electron/Node.js para automatizar o atendimento de
-delivery via WhatsApp Web com IA generativa (OpenAI/DeepSeek), Whisper,
-transcrição de imagens, gestão de cardápio via JSON e painel de pedidos
-KDS (React). Serve também como exemplo de **Harness Engineering**.
+Mini-arnês **Spec Driven Development (SDD)** portável. Instale em qualquer
+repositório, orquestre features com agentes (`leader`, `spec_author`,
+`implementer`, `reviewer`, `jira_importer`) e use o mesmo comando no
+**Cursor** e no **Claude Code**.
 
-> O importante deste repo não é só **o quê** o app faz, mas **como** o
-> arnês está estruturado para que um agente de IA possa trabalhar sobre
-> ele de forma autônoma e verificável.
+Pilares:
 
-## Como o arnês está organizado
+1. **O repositório é o sistema** — estado em `feature_list.json`, `specs/`, `progress/`.
+2. **Multi-agente** — o leader coordena; subagentes escrevem resultados em disco.
+3. **Portão humano** — nada de código antes de `/sddharness approve`.
+4. **Verificação** — `./init.sh` no projeto alvo tem que ficar verde.
 
-| Pilar                                    | Manifestação neste repo                                                        |
-|--------------------------------------------|------------------------------------------------------------------------------------|
-| **1. O repositório É o sistema**          | `AGENTS.md`, `init.sh`, `feature_list.json`, `specs/`, `progress/`, `docs/`      |
-| **2. Orquestração multi-agente**          | `.claude/agents/leader.md`, `spec_author.md`, `implementer.md`, `reviewer.md`     |
-| **3. Spec Driven Development**            | `docs/specs.md`, notação EARS, portão de aprovação humana em `spec_ready`         |
-| **4. Supervisão e melhoria**              | `CHECKPOINTS.md`, hooks em `.claude/settings.json`, `tests/`                      |
+## Para quem
 
-## Para começar
+Qualquer stack (C#, Ionic/Angular, Node, n8n, Python, etc.). Os agentes
+são genéricos: leem `docs/architecture.md`, `docs/conventions.md` e
+`docs/verification.md` **do seu projeto**.
+
+## Instalar em um projeto
+
+A partir do clone deste repositório:
+
+```bash
+./install.sh /caminho/do-seu-projeto
+# ou
+./bin/sddharness init /caminho/do-seu-projeto
+```
+
+A instalação faz **merge conservador**: cria o que falta e **não
+sobrescreve** arquivos que já existem (`AGENTS.md`, docs, etc.).
+
+### O que é criado
+
+| Caminho | Função |
+|---------|--------|
+| `AGENTS.md` | Mapa de entrada para agentes |
+| `CLAUDE.md` | Força papel `leader` no Claude Code |
+| `CHECKPOINTS.md` | Critérios objetivos de saúde |
+| `feature_list.json` | Fila de features + estados |
+| `init.sh` | Bootstrap/verificação da sessão |
+| `docs/architecture.md` | Stack e arquitetura (stub — preencha) |
+| `docs/conventions.md` | Convenções (stub — preencha) |
+| `docs/specs.md` | Processo SDD / EARS |
+| `docs/verification.md` | Como provar que funciona (stub — preencha) |
+| `specs/` | Specs por feature |
+| `progress/` | Sessão viva + histórico |
+| `scripts/validate-features.mjs` | Validador do `feature_list.json` |
+| `.sddharness/config.json` | Modelo por agente (+ `verifyCmd` opcional) |
+| `.cursor/commands/sddharness.md` | Slash command no Cursor |
+| `.cursor/agents/*.md` | Definições dos agentes (Cursor) |
+| `.claude/commands/sddharness.md` | Slash command no Claude Code |
+| `.claude/agents/*.md` | Definições dos agentes (Claude Code) |
+
+### Pré-requisitos no projeto alvo
+
+1. Preencha `docs/architecture.md`, `docs/conventions.md` e
+   `docs/verification.md` com a realidade da stack.
+2. Opcional: defina o comando de verificação em
+   `.sddharness/config.json` → `"verifyCmd": "npm test"` (ou
+   `HARNESS_VERIFY_CMD` no ambiente). O `init.sh` também tenta detectar
+   `dotnet test`, `npm test`, `pnpm test`, `bun test`, `pytest`.
+3. Para import Jira: autentique o MCP Atlassian no Cursor.
+
+## Executar o fluxo
+
+No Cursor ou Claude Code, na raiz do **projeto alvo**:
+
+### 1. Importar do Jira
+
+```
+/sddharness jira PROJ-123
+```
+
+Lê a issue ou o épico (filhos viram features), gera/atualiza
+`feature_list.json` com merge por `jira_key`, e sugere:
+
+> Quer começar com a feature-01?
+
+### 2. (Opcional) Definir modelo por agente
+
+```
+/sddharness config implementer model claude-opus-4
+```
+
+Agentes válidos: `leader`, `spec_author`, `implementer`, `reviewer`,
+`jira_importer`.
+
+### 3. Spec da feature
+
+```
+/sddharness execute feature-01
+```
+
+Se estiver `pending`, o `spec_author` escreve
+`specs/feature-01/{requirements,design,tasks}.md`, marca `spec_ready` e
+**para**. O leader pede:
+
+> Analise a feature-01 e se estiver ok pode rodar `/sddharness approve feature-01`
+
+### 4. Aprovar e implementar
+
+```
+/sddharness approve feature-01
+```
+
+Transiciona para `in_progress`, lança `implementer` → `reviewer`. Se
+APPROVED, marca `done` e sugere a próxima feature.
+
+## Fluxo SDD
+
+```
+pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [implementer → reviewer] → done
+```
+
+| Estado | Significado |
+|--------|-------------|
+| `pending` | Sem spec |
+| `spec_ready` | Spec pronto; aguarda `/sddharness approve` |
+| `in_progress` | Implementação em andamento (máx. 1) |
+| `done` | Verificação verde + review aprovado |
+| `blocked` | Travado (motivo em `progress/current.md`) |
+
+## Agentes
+
+| Agente | Papel |
+|--------|--------|
+| `leader` | Orquestra; não escreve código de aplicação |
+| `spec_author` | Redige requirements (EARS), design e tasks |
+| `implementer` | Implementa UMA feature a partir do spec |
+| `reviewer` | Aprova/rejeita (rastreabilidade + checkpoints) |
+| `jira_importer` | Converte issue/épico Jira em `feature_list.json` |
+
+## Schema de `feature_list.json`
+
+```json
+{
+  "project": "meu-app",
+  "description": "Descrição curta",
+  "source": { "type": "jira", "key": "PROJ-123" },
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_tests_to_close": true,
+    "require_approved_spec_to_implement": true,
+    "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
+    "sdd_required_when": "feature has \"sdd\": true"
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "feature-01",
+      "title": "Título",
+      "description": "O quê entregar",
+      "acceptance": ["Critério verificável"],
+      "jira_key": "PROJ-456",
+      "sdd": true,
+      "status": "pending"
+    }
+  ]
+}
+```
+
+Schema formal: [`schema/feature_list.schema.json`](schema/feature_list.schema.json).
+Nomes usam zero-pad: `feature-01`, `feature-02`, …
+
+## Config de modelos
+
+`.sddharness/config.json`:
+
+```json
+{
+  "agents": {
+    "leader": { "model": "inherit" },
+    "spec_author": { "model": "inherit" },
+    "implementer": { "model": "inherit" },
+    "reviewer": { "model": "inherit" },
+    "jira_importer": { "model": "inherit" }
+  },
+  "verifyCmd": "npm test"
+}
+```
+
+`inherit` = modelo da sessão. `verifyCmd` é opcional.
+
+## Validação
+
+No projeto alvo:
 
 ```bash
 ./init.sh
+# ou, a partir deste kit:
+./bin/sddharness validate /caminho/do-seu-projeto
 ```
 
-Se tudo estiver verde, abra `AGENTS.md` e siga a partir dali.
+## Cursor vs Claude Code
 
-## Para usar o app (humanos)
+| | Cursor | Claude Code |
+|--|--------|-------------|
+| Comando | `.cursor/commands/sddharness.md` | `.claude/commands/sddharness.md` |
+| Agentes | `.cursor/agents/` | `.claude/agents/` |
+| Entry | `AGENTS.md` | `CLAUDE.md` + `AGENTS.md` |
+
+A UX do slash command `/sddharness …` é a mesma nas duas plataformas.
+Os prompts canônicos ficam em `template/agents/`; o install copia os
+wrappers já gerados.
+
+## Desenvolvimento deste kit
 
 ```bash
-npm install
-npm run dev      # Electron em modo desenvolvimento
+npm test
+./install.sh /tmp/sddharness-demo
+./bin/sddharness validate /tmp/sddharness-demo
 ```
 
-## Testar você mesmo com Claude Code
+## Licença / uso
 
-Se você baixar o repo e abrir o Claude Code na raiz, já está dentro do
-arnês: `CLAUDE.md` obriga o modelo a atuar como `leader` (orquestra, não
-edita código) e `docs/specs.md` impõe o fluxo Spec Driven Development.
-
-Receita rápida:
-
-1. `./init.sh` — deve terminar verde.
-2. Abra `feature_list.json` e deixe pelo menos uma feature com
-   `status: "pending"` e `"sdd": true`. A #2 `feature-2` já está assim
-   (a #1 `feature-1` já passou pelo spec).
-3. Lance o Claude Code na raiz do repo: `claude`.
-4. Peça: **«implementa a próxima feature pendente»**.
-
-O que acontece, em duas fases:
-
-**Fase 1 — Spec.** O `leader` lança um `spec_author` que escreve
-`specs/<feature>/{requirements.md, design.md, tasks.md}` e deixa a
-feature em `spec_ready`. Depois **para e pede sua aprovação**.
-
-Você lê os três arquivos no seu editor:
-
-- `requirements.md` — o que a feature deve fazer, em EARS estrito.
-- `design.md` — decisões técnicas antes de escrever código.
-- `tasks.md` — checklist de passos discretos a executar.
-
-Quando estiver de acordo, diga no chat «aprovado» (ou peça mudanças).
-
-**Fase 2 — Código.** O `leader` transiciona a feature para `in_progress`
-e lança `implementer` (segue as tasks uma a uma marcando `[x]`) e depois
-`reviewer` (verifica rastreabilidade `R<n>` ↔ teste e todas as tasks
-completas).
-
-Onde fica o rastro de cada subagente:
-
-| Arquivo                                    | Quem escreve         | O que contém                                                     |
-|-----------------------------------------------|------------------------|----------------------------------------------------------------------|
-| `specs/<feature>/requirements.md`             | spec_author            | Requirements EARS numeradas `R1`, `R2`, ...                       |
-| `specs/<feature>/design.md`                   | spec_author            | Decisões técnicas + alternativa descartada                        |
-| `specs/<feature>/tasks.md`                    | spec_author            | Checklist; o implementer vai marcando `[x]`                       |
-| `progress/current.md`                         | leader                 | Plano vivo da sessão                                              |
-| `progress/impl_<feature>.md`                  | implementer            | Arquivos tocados + mapa `R<n> → teste` + saída dos testes         |
-| `progress/review_<feature>.md`                | reviewer               | Checklist contra `docs/`, `specs/<feature>/` e `CHECKPOINTS.md`    |
-| `feature_list.json`                           | leader/implementer     | `pending` → `spec_ready` → `in_progress` → `done`                 |
-| `progress/history.md`                         | leader                 | Resumo append-only ao fechar a sessão                              |
-
-Abra `specs/` e `progress/` no seu editor enquanto o Claude trabalha:
-cada relatório aparece assim que o subagente termina. Essa é a regra
-anti-telefone-sem-fio em ação — o conteúdo não circula pelo chat, vive
-em disco e fica versionado.
-
-## Estrutura
-
-```
-.
-├── AGENTS.md              # Mapa para agentes (divulgação progressiva)
-├── CHECKPOINTS.md         # Critérios de "estado final correto"
-├── feature_list.json      # Escopo: uma feature por vez
-├── init.sh                # Verificação e inicialização
-├── specs/<feature>/       # Spec por feature (estilo Kiro)
-│   ├── requirements.md    # Notação EARS
-│   ├── design.md          # Decisões técnicas
-│   └── tasks.md           # Checklist de implementação
-├── progress/
-│   ├── current.md         # Sessão ativa (estado vivo)
-│   └── history.md         # Diário append-only
-├── docs/
-│   ├── architecture.md    # O que significa "bom trabalho"
-│   ├── conventions.md     # Estilo, nomes, erros
-│   ├── specs.md           # Processo SDD: EARS, 3 arquivos, aprovação humana
-│   └── verification.md    # Como demonstrar que funciona
-├── .claude/
-│   ├── agents/            # leader, spec_author, implementer, reviewer
-│   └── settings.json      # Hooks que automatizam a verificação
-├── electron/
-│   └── main.js             # Processo main: inicialização, janela, IPC
-├── src/
-│   ├── db/                 # Persistência SQLite
-│   ├── menu/                # Cardápio e configuração global
-│   ├── whatsapp/            # Cliente WhatsApp Web + fila FIFO
-│   ├── ai/                  # Orquestração OpenAI/DeepSeek, Whisper, visão
-│   ├── delivery/            # Geocodificação Nominatim + tempo de espera
-│   └── ui/                  # Painel React (KDS), renderer process
-└── tests/
-    └── *.test.js            # Um arquivo por domínio (Vitest)
-```
-
-## Aprendizados que este projeto ilustra
-
-- **Divulgação progressiva** em `AGENTS.md`: o agente não recebe todas as
-  regras de uma vez, recebe um mapa para buscá-las sob demanda.
-- **Uma feature por vez** validado por `init.sh` (rejeita mais de um
-  `in_progress` em `feature_list.json`).
-- **Spec Driven Development** estilo Kiro: requirements (EARS) → design
-  → tasks → code, com um portão de aprovação humana antes de tocar em
-  código.
-- **Estado em disco**, não no chat: `specs/`, `progress/current.md` e
-  `history.md` sobrevivem a reinícios e context windows estouradas.
-- **Verificação executável**: `init.sh` roda os testes reais e valida a
-  presença de specs para toda feature SDD.
-- **Rastreabilidade obrigatória**: cada `R<n>` é mapeado a um teste
-  concreto; o reviewer rejeita se faltar.
-- **Padrão Leader-Spec-Implementer-Reviewer**: o leader não implementa,
-  o spec_author não codifica, o implementer não se autoaprova, o
-  reviewer não edita código.
-- **Anti telefone-sem-fio**: os subagentes escrevem seus resultados em
-  arquivos e só devolvem uma referência leve.
+Uso interno / time. Ajuste os stubs de `docs/` em cada projeto antes de
+rodar o fluxo SDD de verdade.

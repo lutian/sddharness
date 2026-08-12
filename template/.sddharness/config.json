@@ -1,0 +1,9 @@
+{
+  "agents": {
+    "leader": { "model": "inherit" },
+    "spec_author": { "model": "inherit" },
+    "implementer": { "model": "inherit" },
+    "reviewer": { "model": "inherit" },
+    "jira_importer": { "model": "inherit" }
+  }
+}
