@@ -1,164 +1,213 @@
 {
-  "project": "notes-cli",
-  "description": "CLI minimalista de notas en Python. Sirve como ejemplo didáctico de Harness Engineering.",
+  "project": "pizzaria-whatsapp-delivery-desktop",
+  "description": "Aplicativo desktop em Electron para automação de atendimento de delivery via WhatsApp Web com IA generativa (OpenAI/DeepSeek), Whisper, transcrição de imagens, gestão de cardápio via JSON e painel de pedidos KDS.",
   "rules": {
     "one_feature_at_a_time": true,
     "require_tests_to_close": true,
     "require_approved_spec_to_implement": true,
-    "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
+    "valid_status": [
+      "pending",
+      "spec_ready",
+      "in_progress",
+      "done",
+      "blocked"
+    ],
     "sdd_required_when": "feature has \"sdd\": true"
   },
   "features": [
     {
       "id": 1,
-      "name": "storage_layer",
-      "title": "Capa de almacenamiento JSON",
-      "description": "Lectura/escritura atómica de notas en un archivo JSON. Crea el archivo si no existe.",
+      "name": "feature-1",
+      "title": "Banco de Dados SQLite e Modelagem Inicial",
+      "description": "Configuração da camada de persistência local SQLite com tabelas de clientes, sessões de conversas e pedidos.",
       "acceptance": [
-        "Existe src/storage.py con funciones load() y save(notes)",
-        "save() es atómico (escritura a archivo temporal + rename)",
-        "load() devuelve [] si el archivo no existe",
-        "tests/test_storage.py cubre los 3 casos anteriores"
+        "O arquivo do banco SQLite é criado corretamente na pasta de dados do sistema do usuário.",
+        "A tabela de clientes armazena o telefone, dados cadastrais, endereço e coordenadas de geolocalização (latitude/longitude), e a tabela de sessões mantém apenas o histórico mais recente por cliente.",
+        "A tabela de pedidos armazena corretamente os itens em JSON, status e nome do motoboy.",
+        "tests/database.test.js valida a criação das tabelas e a regra de unicidade e limpeza de sessões antigas."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 2,
-      "name": "note_model",
-      "title": "Modelo de Nota",
-      "description": "Estructura inmutable que representa una nota con id, title, body, created_at.",
+      "name": "feature-2",
+      "title": "Leitor de Cardápio e Configurações Globais",
+      "description": "Módulo para carregar o cardápio estruturado de um arquivo JSON/Markdown e gerenciar configurações da aplicação (API keys, system prompt, tom de voz).",
       "acceptance": [
-        "Existe src/notes.py con la clase/dataclass Note",
-        "Note.new(title, body) genera id incremental y created_at en ISO 8601",
-        "tests/test_notes.py valida creación y serialización"
+        "O sistema lê e valida o arquivo cardapio.json corretamente na inicialização.",
+        "O painel ou backend consegue salvar e carregar as chaves de API da OpenAI e DeepSeek de forma segura.",
+        "As diretrizes do system prompt e switches de ativação de áudio e imagem são aplicadas em tempo de execução.",
+        "tests/config-menu.test.js valida a leitura do cardápio e a persistência das configurações."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 3,
-      "name": "cli_add_list",
-      "title": "Comandos add y list en el CLI",
-      "description": "Permite añadir una nota y listar todas las notas existentes.",
+      "name": "feature-3",
+      "title": "Conexão WhatsApp e Fila de Mensagens Sequencial",
+      "description": "Integração com biblioteca de automação do WhatsApp Web e implementação de um gerenciador de fila FIFO para envio sequencial de mensagens.",
       "acceptance": [
-        "`python -m src.cli add 'titulo' --body 'texto'` imprime el id creado",
-        "`python -m src.cli list` imprime una línea por nota: `<id>  <created_at>  <title>`",
-        "tests/test_cli.py cubre ambos comandos con un archivo temporal"
+        "O QR Code de autenticação do WhatsApp é gerado e exibido na aplicação desktop.",
+        "Mensagens recebidas são enfileiradas e processadas estritamente de forma sequencial (uma por vez) com delay humanizado.",
+        "O sistema recupera o histórico da sessão ativa do cliente no banco de dados para manter o contexto da conversa.",
+        "tests/whatsapp-queue.test.js valida o comportamento da fila FIFO e o isolamento de sessões."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 4,
-      "name": "cli_show_delete",
-      "title": "Comandos show y delete en el CLI",
-      "description": "Permite ver y eliminar notas por id.",
+      "name": "feature-4",
+      "title": "Processamento Multimodal com IA (Whisper e Visão)",
+      "description": "Integração com a API da OpenAI para transcrever áudios de voz de clientes via Whisper e interpretar imagens enviadas.",
       "acceptance": [
-        "`python -m src.cli show <id>` imprime título, fecha y cuerpo",
-        "`python -m src.cli delete <id>` elimina y confirma con un mensaje",
-        "Ambos comandos devuelven exit code != 0 si el id no existe",
-        "tests/test_cli.py cubre éxito y fallo"
+        "Mensagens de áudio recebidas no WhatsApp são baixadas, convertidas e enviadas para o Whisper gerando o texto correspondente.",
+        "Imagens enviadas pelos clientes (como comprovantes ou fotos) são processadas pelo modelo de visão da OpenAI quando o switch estiver ativo.",
+        "O texto extraído de áudios e imagens é injetado no fluxo da conversa da IA.",
+        "tests/ai-multimodal.test.js valida o fluxo de tratamento de áudio e imagem."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 5,
-      "name": "cli_search",
-      "title": "Comando search",
-      "description": "Búsqueda por substring en título o cuerpo (case-insensitive).",
+      "name": "feature-5",
+      "title": "Motor de Conversação com OpenAI e DeepSeek",
+      "description": "Orquestrador de IA generativa para triagem de pedidos, apresentação do cardápio, fechamento do pedido e extração de dados do cliente.",
       "acceptance": [
-        "`python -m src.cli search 'palabra'` lista las notas que contienen la palabra",
-        "Si no hay coincidencias, exit code 1 y mensaje claro",
-        "tests/test_cli.py cubre coincidencia, no-coincidencia y case-insensitivity"
+        "O bot utiliza o modelo selecionado no painel (OpenAI ou DeepSeek) respeitando o system prompt e o cardápio.",
+        "A IA consegue identificar a intenção de compra, coletar nome, endereço e forma de pagamento, salvando os dados no banco.",
+        "O fluxo de fechamento de pedido gera um registro estruturado na tabela de pedidos.",
+        "tests/conversation-engine.test.js valida a triagem, extração de dados e registro do pedido."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 6,
-      "name": "cli_edit",
-      "title": "Comando edit",
-      "description": "Permite modificar el título y/o cuerpo de una nota existente por id.",
+      "name": "feature-6",
+      "title": "Geocodificação e Cálculo Dinâmico de Tempo de Espera",
+      "description": "Integração com OpenStreetMap/Nominatim para converter o endereço do cliente em coordenadas e calcular o tempo estimado de entrega baseado na fila atual.",
       "acceptance": [
-        "`python -m src.cli edit <id> --title 'nuevo'` actualiza solo el título",
-        "`python -m src.cli edit <id> --body 'nuevo'` actualiza solo el cuerpo",
-        "Pasar ambos flags actualiza ambos campos en la misma llamada",
-        "Si no se pasa ningún flag, exit code != 0 y mensaje claro",
-        "Si el id no existe, exit code != 0 y mensaje en stderr",
-        "tests/test_cli.py cubre éxito (cada flag y combinado), id inexistente y ausencia de flags"
+        "O endereço textual do cliente é geocodificado utilizando a API do Nominatim.",
+        "O tempo de espera é calculado com base na base de pedidos pendentes e na distância calculada.",
+        "Pedidos marcados como saídos para entrega pelo administrador são excluídos do cálculo da demanda atual da cozinha.",
+        "tests/delivery-time.test.js valida o cálculo de geolocalização e o peso da fila de pedidos."
       ],
+      "sdd": true,
       "status": "done"
     },
     {
       "id": 7,
-      "name": "cli_recent",
-      "title": "Comando recent",
-      "description": "Lista las N notas más recientes, ordenadas por created_at descendente.",
+      "name": "feature-7",
+      "title": "Painel Administrativo KDS e Gestão de Pedidos",
+      "description": "Interface em React para visualização em tempo real dos pedidos, alteração de status, atribuição de motoboy e monitoramento do WhatsApp.",
       "acceptance": [
-        "`python -m src.cli recent` lista las 5 notas más recientes por defecto",
-        "`python -m src.cli recent --limit 10` permite cambiar el número",
-        "El orden es por `created_at` de más reciente a más antigua",
-        "Cada línea sigue el formato `<id>\\t<created_at>\\t<title>` (mismo que `list`)",
-        "Si no hay notas, exit code 0 y no imprime nada (consistente con `list`)",
-        "Si `--limit` es <= 0, exit code != 0 y mensaje claro en stderr",
-        "tests/test_cli.py cubre: orden por defecto, límite custom, archivo vacío, límite inválido"
+        "O painel exibe em tempo real a listagem de pedidos ativos com seus respectivos tempos de espera calculados.",
+        "O operador pode alterar o status do pedido (Em Preparo, Saiu para Entrega, Concluído) e atribuir o nome do motoboy.",
+        "O painel exibe o status de conexão do WhatsApp Web (Conectado/Desconectado).",
+        "tests/admin-kds.test.js valida as operações de atualização de status de pedidos e atribuição de motoboy."
       ],
       "sdd": true,
       "status": "done"
     },
     {
       "id": 8,
-      "name": "cli_count",
-      "title": "Comando count",
-      "description": "Muestra cuántas notas hay almacenadas.",
+      "name": "feature-8",
+      "title": "Empacotamento e Instalador Desktop Windows",
+      "description": "Configuração do empacotamento com Electron para gerar um instalador nativo executável para Windows (.exe / .msi) com banco e dependências embutidos.",
       "acceptance": [
-        "`python -m src.cli count` imprime un entero único: el número total de notas",
-        "Si no hay notas, imprime `0`",
-        "El comando no modifica el archivo de notas",
-        "tests/test_cli.py cubre: archivo vacío y archivo con varias notas"
+        "O build de produção compila sem erros encapsulando o frontend, o backend Node.js e o SQLite local.",
+        "O instalador gerado configura corretamente as permissões de leitura e escrita na máquina do cliente Windows.",
+        "A aplicação inicia corretamente em segundo plano e abre a interface local sem falhas.",
+        "tests/desktop-build.test.js valida a integridade do empacotamento e inicialização do executável."
       ],
       "sdd": true,
       "status": "pending"
     },
     {
       "id": 9,
-      "name": "cli_export",
-      "title": "Comando export a Markdown",
-      "description": "Exporta todas las notas a un archivo Markdown legible por humanos.",
+      "name": "feature-9",
+      "title": "Integração Real com WhatsApp Web",
+      "description": "Implementação concreta do adapter de WhatsApp (já definido em src/whatsapp/adapter.js) usando uma biblioteca real de automação do WhatsApp Web, conectando QR Code real, recebimento e envio de mensagens reais a clientes reais.",
       "acceptance": [
-        "`python -m src.cli export <ruta>` escribe todas las notas en `<ruta>` con formato Markdown",
-        "Cada nota aparece como sección con título de nivel 2 (`## <title>`), una línea con `created_at`, y el cuerpo como párrafo",
-        "Las notas se ordenan por `id` ascendente en el export",
-        "Si la ruta destino ya existe, exit code != 0 y mensaje claro en stderr (no sobreescribir por defecto)",
-        "Pasar `--force` permite sobreescribir un archivo existente",
-        "tests/test_cli.py cubre: export a ruta nueva, intento de sobreescritura sin `--force`, sobreescritura con `--force`"
+        "A implementação concreta do adapter conecta a uma sessão real do WhatsApp Web e expõe o QR Code de autenticação real.",
+        "Mensagens reais recebidas de clientes são repassadas para a fila FIFO já implementada (feature-3) sem alteração do contrato do adapter.",
+        "Respostas geradas pelo motor de conversação (feature-5) são enviadas de volta ao cliente real via WhatsApp.",
+        "tests/whatsapp-adapter-real.test.js valida o adapter concreto contra o contrato já definido, isolando a biblioteca externa real."
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 10,
-      "name": "cli_stats",
-      "title": "Comando stats",
-      "description": "Muestra estadísticas agregadas sobre las notas almacenadas.",
+      "name": "feature-10",
+      "title": "Integração Real com OpenAI, DeepSeek e Nominatim",
+      "description": "Implementações concretas dos adapters de IA (aiClient, chatClient, mediaFetcher, pdfConverter, já definidos em src/ai/) e de geocodificação (geocoder, já definido em src/delivery/) usando os SDKs/APIs reais da OpenAI, DeepSeek e Nominatim.",
       "acceptance": [
-        "`python -m src.cli stats` imprime: número total de notas, fecha de la nota más antigua, fecha de la nota más reciente, longitud media del cuerpo (entero, en caracteres)",
-        "El formato es un par `clave: valor` por línea",
-        "Si no hay notas, exit code 0 y un único mensaje `sin notas` por stdout",
-        "El comando no modifica el archivo de notas",
-        "tests/test_cli.py cubre: archivo vacío, archivo con una sola nota, archivo con varias notas"
+        "As implementações concretas dos adapters de IA fazem chamadas reais às APIs da OpenAI e DeepSeek respeitando os contratos já definidos e testados nas features 4 e 5.",
+        "A implementação concreta do geocoder faz chamadas HTTP reais à API do Nominatim respeitando o contrato já definido e testado na feature 6.",
+        "As chaves de API configuradas pelo usuário (feature-2) são usadas nas chamadas reais.",
+        "tests/ai-adapters-real.test.js e tests/geocoder-real.test.js validam os adapters concretos contra os contratos já definidos, isolando as chamadas de rede reais."
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 11,
-      "name": "cli_clear",
-      "title": "Comando clear (destructivo)",
-      "description": "Elimina todas las notas del archivo. Requiere confirmación explícita vía flag.",
+      "name": "feature-11",
+      "title": "Sistema de Design — Tema Claro/Escuro e Componentes Base",
+      "description": "Fundação visual reutilizável (tokens de cor, tipografia, componentes base como Card, Badge, Button, Navbar, ThemeToggle) para as interfaces React do painel de configuração e do painel KDS, baseada estritamente nos tokens já definidos em docs/styles.css (paleta HSL roxa, tema claro/escuro via classes .light/.dark, fonte Space Grotesk, gradientes, glass-card).",
       "acceptance": [
-        "`python -m src.cli clear` SIN `--yes` imprime un mensaje pidiendo confirmación, NO borra nada y sale con exit code != 0",
-        "`python -m src.cli clear --yes` borra todas las notas y confirma con un mensaje del tipo `borradas N notas`",
-        "Después de un clear exitoso, `list` no imprime nada",
-        "Si el archivo de notas no existía, `clear --yes` sale con exit code 0 e informa `borradas 0 notas`",
-        "tests/test_cli.py cubre: sin `--yes` (no destructivo), con `--yes` y notas presentes, con `--yes` y archivo vacío"
+        "Os tokens de cor, tipografia e espaçamento usados pelos componentes React vêm de docs/styles.css, sem paleta nova inventada.",
+        "O alternador de tema claro/escuro funciona e persiste a preferência do usuário.",
+        "Componentes base (Card, Badge, Button, Navbar, ThemeToggle) são reutilizáveis pelas features 12 e 13 sem duplicação de estilo.",
+        "tests/design-system.test.js valida a lógica de alternância de tema e a composição dos componentes base (não teste visual/pixel)."
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 12,
+      "name": "feature-12",
+      "title": "Interface React — Painel de Configuração",
+      "description": "Interface React real para o painel de configuração (cardápio, API keys, system prompt, switches de áudio/imagem), consumindo a camada de dados já pronta em src/menu/ e os componentes base da feature-11.",
+      "acceptance": [
+        "O painel exibe e permite editar o cardápio carregado (feature-2).",
+        "O painel exibe e permite salvar as chaves de API da OpenAI e DeepSeek, o system prompt e os switches de áudio/imagem (feature-2).",
+        "O painel usa o Sistema de Design da feature-11 (tema claro/escuro, componentes base).",
+        "tests/config-panel-ui.test.js valida a lógica de interação do painel (edição, salvamento, validação) com testing-library."
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 13,
+      "name": "feature-13",
+      "title": "Interface React — Painel KDS",
+      "description": "Interface React real para o painel administrativo KDS (pedidos em tempo real, alteração de status, atribuição de motoboy, status de conexão do WhatsApp), consumindo a camada de dados já pronta em src/delivery/painelPedidos.js (feature-7) e os componentes base da feature-11.",
+      "acceptance": [
+        "O painel exibe em tempo real a listagem de pedidos ativos com tempo de espera calculado (feature-6/7).",
+        "O operador altera o status do pedido e atribui motoboy pela UI, refletindo as regras de transição já definidas na feature-7.",
+        "O painel exibe o status de conexão do WhatsApp Web em tempo real (feature-3/9).",
+        "O painel usa o Sistema de Design da feature-11 (tema claro/escuro, componentes base).",
+        "tests/kds-panel-ui.test.js valida a lógica de interação do painel (mudança de status, atribuição de motoboy) com testing-library."
+      ],
+      "sdd": true,
+      "status": "done"
+    },
+    {
+      "id": 14,
+      "name": "feature-14",
+      "title": "Processo Principal Electron (Composition Root)",
+      "description": "Processo principal do Electron que inicializa o banco de dados, o adapter real de WhatsApp (feature-9), os adapters reais de IA/geocodificação (feature-10), liga a fila de mensagens ao motor de conversação, e expõe IPC para as interfaces React (feature-12/13) consumirem os dados reais.",
+      "acceptance": [
+        "O processo principal inicializa o banco SQLite, o cliente WhatsApp real e os adapters de IA/geocodificação reais na inicialização do app.",
+        "Mensagens reais recebidas fluem: WhatsApp → fila FIFO → motor de conversação → resposta enviada de volta ao cliente real, sem intervenção manual.",
+        "As interfaces React (painel de configuração e painel KDS) recebem e enviam dados reais via IPC, refletindo o estado real do banco/WhatsApp.",
+        "tests/electron-main.test.js valida a lógica de inicialização e ligação dos módulos (composition root), isolando o runtime real do Electron."
       ],
       "sdd": true,
       "status": "pending"

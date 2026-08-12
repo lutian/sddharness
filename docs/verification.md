@@ -1,76 +1,90 @@
-# Verificación — Cómo demostrar que el trabajo funciona
+# Verificação — Como demonstrar que o trabalho funciona
 
-> Regla de oro: **el agente no dice "funciona", lo demuestra**.
-> Toda feature termina con evidencia ejecutable, no con afirmaciones.
+> Regra de ouro: **o agente não diz "funciona", ele demonstra**.
+> Toda feature termina com evidência executável, não com afirmações.
 
-## Niveles de verificación
+## Níveis de verificação
 
-### Nivel 1 — Tests unitarios (obligatorio)
+### Nível 1 — Testes unitários (obrigatório)
 
-Toda función pública en `src/` tiene al menos un test en `tests/` que:
+Toda função pública exportada por um `index.js` de domínio em `src/` tem
+pelo menos um teste em `tests/` que:
 
-1. Cubre el camino feliz.
-2. Cubre al menos un camino de error si la función puede fallar.
+1. Cobre o caminho feliz.
+2. Cobre pelo menos um caminho de erro, se a função puder falhar.
 
 Comando:
 ```bash
-python3 -m unittest discover -s tests -v
+npm test
 ```
 
-### Nivel 2 — Test de integración del CLI (obligatorio para features de UI)
+(equivalente a `vitest run` — ver `package.json`).
 
-Las features que añaden comandos al CLI se verifican ejecutando el CLI real
-contra un archivo temporal:
+### Nível 2 — Teste de integração de módulo (obrigatório para features com IO)
 
-```python
-import subprocess, tempfile, os
-with tempfile.TemporaryDirectory() as d:
-    env = {**os.environ, "NOTES_FILE": os.path.join(d, "notes.json")}
-    out = subprocess.check_output(
-        ["python3", "-m", "src.cli", "add", "hola", "--body", "mundo"],
-        env=env, text=True,
-    )
-    assert "id=" in out
+Features que tocam SQLite, arquivos de configuração ou o cardápio são
+verificadas exercitando o módulo real contra um recurso temporário, não
+um mock:
+
+```javascript
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { openDatabase } from "../src/db/index.js";
+
+const dir = mkdtempSync(join(tmpdir(), "pizzaria-"));
+const db = openDatabase(join(dir, "app.sqlite"));
+// ...asserções sobre o estado real do banco...
+rmSync(dir, { recursive: true, force: true });
 ```
 
-### Nivel 3 — Smoke test manual (opcional pero recomendado)
+Integrações com APIs externas (OpenAI, Nominatim, WhatsApp Web) são
+verificadas com um dublê na borda HTTP — nunca batendo no serviço real.
 
-Antes de cerrar la sesión, ejecuta un flujo end-to-end con un archivo
-temporal en `/tmp`:
+### Nível 3 — Smoke test manual (opcional, mas recomendado)
+
+Antes de encerrar a sessão, execute um fluxo ponta a ponta em modo
+desenvolvimento:
 
 ```bash
-NOTES_FILE=/tmp/notes_demo.json python3 -m src.cli add "test" --body "x"
-NOTES_FILE=/tmp/notes_demo.json python3 -m src.cli list
-rm /tmp/notes_demo.json
+npm run dev
 ```
 
-### Nivel 4 — Trazabilidad de requirements (obligatorio para features con `"sdd": true`)
+e verifique manualmente o fluxo afetado pela feature (ex.: abrir o app,
+conferir que o arquivo SQLite aparece na pasta de dados do usuário).
 
-Cada `R<n>` de `specs/<name>/requirements.md` debe poder mapearse a al
-menos un test concreto en `tests/`. El reviewer rechaza si falta cobertura.
+### Nível 4 — Rastreabilidade de requirements (obrigatório para features com `"sdd": true`)
 
-El implementer documenta el mapa en `progress/impl_<name>.md`:
+Cada `R<n>` de `specs/<name>/requirements.md` deve poder ser mapeado a
+pelo menos um teste concreto em `tests/`. O reviewer rejeita se faltar
+cobertura.
+
+O implementer documenta o mapa em `progress/impl_<name>.md`:
 
 ```markdown
-## Trazabilidad
-- R1 → `test_recent_default_limit`
-- R2 → `test_recent_invalid_limit`
-- R3 → `test_recent_custom_limit`
+## Rastreabilidade
+- R1 → `cria o arquivo SQLite se não existir`
+- R2 → `rejeita um telefone duplicado em clientes`
+- R3 → `mantém apenas a sessão mais recente por cliente`
 ```
 
-## Anti-patrones (no hacer)
+## Antipadrões (não fazer)
 
-- ❌ "He añadido el comando, debería funcionar." → falta test ejecutable.
-- ❌ Test que solo verifica que la función no lanza excepción. → tiene que
-  comprobar el resultado concreto.
-- ❌ `mock` del filesystem. → usa `tempfile.TemporaryDirectory()` real.
-- ❌ Marcar la feature como `done` sin pasar `./init.sh`.
+- ❌ "Adicionei o módulo, deveria funcionar." → falta teste executável.
+- ❌ Teste que só verifica que a função não lança exceção. → precisa
+  conferir o resultado concreto (linhas inseridas, arquivo criado, etc.).
+- ❌ Mock do sistema de arquivos. → use um diretório temporário real
+  (`fs.mkdtempSync`).
+- ❌ Chamar APIs externas reais (OpenAI, Nominatim, WhatsApp) em um
+  teste. → intercepte na borda HTTP com um dublê.
+- ❌ Marcar a feature como `done` sem passar `./init.sh`.
 
-## Verificación final antes de cerrar
+## Verificação final antes de fechar
 
 ```bash
-./init.sh           # debe terminar con [OK] Entorno listo
+./init.sh           # deve terminar com [OK] Ambiente pronto
 ```
 
-Si `./init.sh` está rojo, **no** marques nada como `done`. Anota el bloqueo
-en `progress/current.md` con estado `blocked` en `feature_list.json`.
+Se `./init.sh` estiver vermelho, **não** marque nada como `done`. Anote o
+bloqueio em `progress/current.md` com status `blocked` em
+`feature_list.json`.

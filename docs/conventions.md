@@ -1,67 +1,79 @@
-# Convenciones de código
+# Convenções de código
 
-> Homogeneidad extrema. La IA predice mejor cuando el repositorio se parece
-> a sí mismo en todas partes.
+> Homogeneidade extrema. A IA prevê melhor quando o repositório se parece
+> consigo mesmo em todos os lugares.
 
-## Estilo Python
+## Estilo JavaScript
 
-- **Versión:** Python 3.9+ (sintaxis `list[str]` permitida).
-- **Formato:** PEP 8. Líneas máximo 100 caracteres.
-- **Imports:** stdlib primero, luego locales. Una línea por módulo.
-- **Strings:** comillas dobles `"..."` siempre. Comillas simples solo
-  para escapar comillas dobles dentro.
-- **f-strings** para interpolación. Nada de `.format()` ni `%`.
+- **Runtime:** Node.js 20+, módulos ES (`import`/`export`), `package.json`
+  com `"type": "module"`.
+- **Formatação:** 2 espaços de indentação. Linhas com no máximo 100
+  caracteres.
+- **Imports:** pacotes do npm primeiro, depois locais (caminhos
+  relativos). Um import por linha, exceto desestruturação curta
+  (`import { a, b } from "..."`).
+- **Strings:** aspas duplas `"..."` para literais simples; template
+  literals (`` `...` ``) para interpolação. Nada de concatenação com `+`.
+- **Async:** `async`/`await` sempre. Nada de callbacks aninhados nem
+  `.then()` encadeado, exceto na borda de uma biblioteca que exija.
 
-## Nombres
+## Nomes
 
-| Tipo                    | Convención        | Ejemplo               |
-|-------------------------|-------------------|-----------------------|
-| Módulos                 | `snake_case`      | `notes.py`            |
-| Clases                  | `PascalCase`      | `Note`                |
-| Funciones / variables   | `snake_case`      | `load_notes`          |
-| Constantes              | `UPPER_SNAKE`     | `DEFAULT_NOTES_PATH`  |
-| Privadas                | prefijo `_`       | `_atomic_write`       |
+| Tipo                     | Convenção          | Exemplo                  |
+|---------------------------|---------------------|----------------------------|
+| Arquivos de módulo        | `kebab-case.js`     | `whatsapp-queue.js`       |
+| Componentes React         | `PascalCase.jsx`    | `OrderCard.jsx`            |
+| Classes                   | `PascalCase`        | `DatabaseError`            |
+| Funções / variáveis       | `camelCase`         | `loadMenu`                 |
+| Constantes                 | `UPPER_SNAKE`       | `DEFAULT_DB_PATH`          |
+| Privadas (módulo)         | prefixo `_`         | `_atomicWrite`             |
 
-## Estructura de archivo
+## Estrutura de um domínio em `src/`
 
-Cada archivo en `src/` empieza con:
+Cada domínio (`src/db/`, `src/menu/`, …) expõe sua superfície pública em
+um único `index.js`:
 
-```python
-"""Una línea describiendo el propósito del módulo."""
-from __future__ import annotations
+```javascript
+// src/db/index.js — persistência SQLite: clientes, sessões, pedidos.
+import Database from "better-sqlite3";
 
-# imports stdlib
-import json
-import os
+import { DatabaseError } from "./errors.js";
 
-# imports locales
-from src.notes import Note
+export function openDatabase(path) { /* ... */ }
 ```
 
-## Tests
+Os detalhes internos (queries, mapeamentos) ficam em outros arquivos do
+mesmo diretório e não são importados de fora do domínio.
 
-- Un archivo de test por módulo: `tests/test_<módulo>.py`.
-- Una clase `Test<Cosa>(unittest.TestCase)` por unidad lógica.
-- Cada test usa un `tempfile.TemporaryDirectory()` y limpia tras de sí.
-- Nombres de test descriptivos: `test_load_returns_empty_when_file_missing`.
+## Testes
 
-## Manejo de errores
+- Um arquivo de teste por módulo público: `tests/<domínio>.test.js`
+  (ex.: `tests/database.test.js` para `src/db/`).
+- Estrutura Vitest: `describe("<Domínio>", () => { it("...", () => {}) })`.
+- Cada teste usa um diretório temporário real
+  (`fs.mkdtempSync(os.tmpdir())`) e o limpa em `afterEach`. Nada de mocks
+  do sistema de arquivos.
+- As chamadas de rede (OpenAI, Nominatim, WhatsApp Web) são interceptadas
+  na borda HTTP (ex.: com um dublê de `fetch` ou do cliente concreto).
+  Nunca se bate na API real a partir de um teste.
+- Nomes de teste descritivos, em português: `"cria o arquivo SQLite se
+  não existir"`.
 
-Excepciones del dominio en `src/notes.py`:
+## Tratamento de erros
 
-```python
-class NoteError(Exception):
-    """Base para errores del dominio."""
+Exceções de domínio, uma classe base por módulo e subtipos concretos:
 
-class NoteNotFound(NoteError):
-    """Se lanza cuando se busca una nota inexistente."""
+```javascript
+export class DatabaseError extends Error {}
+export class ClientNotFoundError extends DatabaseError {}
 ```
 
-El CLI captura excepciones del dominio, imprime mensaje a `stderr` y sale
-con código 1. Nunca propaga stack traces al usuario.
+Os processos de borda (handlers IPC em `electron/main.js`, integrações
+externas) capturam as exceções de domínio e as traduzem em uma resposta
+segura para quem chamou. Nunca se propaga um stack trace cru para a UI.
 
-## Comentarios
+## Comentários
 
-Por defecto **no** se escriben. Solo se permiten cuando explican un *por qué*
-no obvio (p. ej. workaround documentado, invariante sutil). Los nombres deben
-hacer el resto.
+Por padrão **não** se escrevem. Só são permitidos quando explicam um
+*porquê* não óbvio (ex.: workaround documentado, invariante sutil,
+decisão de segurança). Os nomes devem fazer o resto do trabalho.
