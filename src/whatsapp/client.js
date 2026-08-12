@@ -59,6 +59,7 @@ export function createWhatsAppClient(adapter, { db, minDelayMs = 1000, maxDelayM
 
   return {
     on: (evento, callback) => emitter.on(evento, callback),
+    off: (evento, callback) => emitter.off(evento, callback),
     initialize: () => adapter.initialize(),
     sendMessage: (clienteId, texto) => adapter.sendMessage(clienteId, texto),
     getConnectionStatus: () => connectionStatus,

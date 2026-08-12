@@ -802,3 +802,124 @@
   `APPROVED` sem mudanças pendentes (`progress/review_feature-13.md`).
 - **Cierre:** feature-13 marcada `done` em `feature_list.json`. Restante
   na fila: feature-8 e feature-14 (`pending`).
+
+## 2026-08-12 — Feature 14: Processo Principal Electron (Composition Root)
+- **Agente:** leader → implementer → reviewer (2 rodadas).
+- **Spec:** `specs/feature-14/{requirements,design,tasks.md}` já aprovado
+  pelo humano antes do início da implementação (R1–R27, 30 tasks).
+- **Decisões centrais de design:**
+  1. **Canais IPC espelham exatamente o contrato dos `dataClient` locais.**
+     `src/ui/panels/config/ipcDataClient.js` e
+     `src/ui/panels/kds/ipcDataClient.js` implementam `createIpcDataClient()`
+     com a mesma assinatura pública de `localDataClient.js` (feature-12 e
+     feature-13, respectivamente), delegando cada método a um canal IPC
+     específico via `window.electronAPI.invoke`/`on`. Isso permite trocar a
+     implementação injetada nos painéis React (local ↔ IPC) sem tocar nos
+     componentes de UI.
+  2. **`onPedidosChange` resolvido via `webContents.send`.** O processo
+     principal (`electron/main.js`) escuta o evento de domínio
+     `pedidoRegistrado` do motor de conversação e os handlers de
+     `kds:atualizar-status-pedido`/`kds:atribuir-motoboy`, recalcula a
+     lista de pedidos ativos e envia via `webContents.send("kds:pedidos-
+     changed", ...)`, resolvendo a limitação deixada em aberto pela
+     feature-13 (que só tinha um no-op local).
+  3. **Adição aditiva de `off(evento, callback)` em `WhatsAppClient`**
+     (`src/whatsapp/client.js`), permitindo que `ipcDataClient.js` do KDS
+     implemente cancelamento real de `onConnectionStatusChange` (outra
+     limitação deixada em aberto pela feature-13). Mudança estritamente
+     aditiva — nenhuma chave/comportamento pré-existente alterado
+     (confirmado via `git diff`: 1 linha adicionada).
+  4. **Mock completo do módulo `electron`** em `tests/electron-main.test.js`
+     (`ipcMain`, `BrowserWindow`, `app`, `contextBridge` etc.) mais os 5
+     módulos de domínio (`db`, `whatsapp`, `ai`, `delivery`, `menu`)
+     mockados via `vi.mock`, garantindo que nenhum teste desta feature abre
+     SQLite real, sessão real do WhatsApp Web ou runtime real do Electron
+     (R27).
+- **Rodada 1 de revisão — `CHANGES_REQUESTED`:** o `reviewer` apontou dois
+  problemas em `progress/review_feature-14.md`:
+  1. Os testes de R10 (`config:load-cardapio`), R11 (`config:load-config`),
+     R14 (`kds:listar-pedidos-ativos`) e R17
+     (`kds:status-conexao-whatsapp`) só verificavam que o canal IPC havia
+     sido *registrado* (`ipcMain._handlers.has(canal)`), sem nunca invocar
+     o handler capturado para confirmar o valor de retorno — teste fraco
+     demais para o requisito.
+  2. T29 e T30 continuavam `[ ]` em `specs/feature-14/tasks.md`, apesar de
+     `progress/impl_feature-14.md` afirmar (incorretamente) que todas as
+     T1–T30 já estavam `[x]`.
+  **Correção aplicada pelo implementer:** 4 novos testes adicionados a
+  `tests/electron-main.test.js`, seguindo o padrão já usado corretamente
+  para R12/R15/R16 — capturam o handler real via
+  `electronMock.ipcMain._handlers.get(canal)`, invocam-no e verificam
+  tanto a chamada ao módulo de domínio mockado quanto o valor efetivamente
+  retornado. T29/T30 marcadas `[x]` (o trabalho subjacente já existia; só
+  o checkbox estava desatualizado) e `progress/impl_feature-14.md`
+  corrigido para refletir isso com precisão.
+- **Implementação:** `implementer` executou T1–T30 de
+  `specs/feature-14/tasks.md`: `package.json` (`electron` em
+  devDependencies + campo `"main"`), `off` aditivo em
+  `src/whatsapp/client.js`, `electron/main.js` (composition root com
+  `resolvePaths`, `buildDependencies`, `createMainWindow`,
+  `registerIpcHandlers`, `wireConversationFlow`, `startApp`, todas
+  exportadas nomeadamente e testáveis isoladamente), `electron/preload.js`
+  (`contextBridge` restrito a uma lista fixa de canais permitidos),
+  `src/ui/panels/config/ipcDataClient.js` e
+  `src/ui/panels/kds/ipcDataClient.js`. Escrito `tests/electron-main.test.js`
+  (20 testes cobrindo R1–R27: ordem de montagem das dependências,
+  `whatsappClient.initialize()`, fluxo mensagem → motor de conversação →
+  resposta, captura de erro sem derrubar o processo, notificação de
+  domínio ao registrar pedido, os sete canais IPC de config/kds com
+  invocação real do handler e checagem de retorno para R10/R11/R14/R17,
+  propagação de erro em `config:save-config`, atualização de status/
+  atribuição de motoboy com notificação, repasse de mudança de status de
+  conexão, cancelamento real de assinaturas em `ipcDataClient.js`,
+  `off` sem afetar outros callbacks do mesmo evento, preload restrito
+  rejeitando canal desconhecido, `package.json` correto). Mais 1 teste em
+  `tests/whatsapp-queue.test.js` para o `off` aditivo. Rastreabilidade
+  R1–R27 documentada em `progress/impl_feature-14.md`.
+- **Revisão:** `reviewer` (2ª rodada) confirmou por leitura direta que os
+  4 novos testes de R10/R11/R14/R17 exercitam o handler real capturado e
+  verificam o valor de retorno concreto (não apenas registro), que
+  T29/T30 refletem trabalho de fato realizado (`./init.sh` verde,
+  rastreabilidade existente e atualizada), e reconfirmou sem nova
+  verificação exaustiva os pontos já validados na rodada anterior
+  (R1–R9, R12–R13, R15–R27, `off` estritamente aditivo, mock completo de
+  `electron`, contratos `ipcDataClient.js` espelhando `localDataClient.js`,
+  `onPedidosChange`/`kds:pedidos-changed` funcional). `./init.sh` verde
+  (189/189 testes, 14 arquivos, sem regressão em nenhuma feature 1–13).
+  Veredito `APPROVED` (`progress/review_feature-14.md`).
+- **Checklist de verificação manual pendente (Nível 3, fora do escopo
+  automatizável — depende de runtime real do Electron, sessão real do
+  WhatsApp Web, credenciais reais de API e rede externa), a ser executado
+  pelo usuário humano:**
+  1. Colocar um `cardapio.json` válido e, opcionalmente, um `config.json`
+     com chaves de API reais em `app.getPath("userData")` (ou preencher
+     via painel de configuração após o primeiro `npm run dev`).
+  2. Rodar `npm run dev` e confirmar que a janela do Electron abre sem
+     erros no console principal (DevTools).
+  3. Confirmar que um QR Code real aparece nos logs/evento `"qr"` (sem UI
+     dedicada — fora do escopo desta feature) e escaneá-lo com um WhatsApp
+     real.
+  4. Abrir o painel de configuração (feature-12) dentro da janela Electron
+     e confirmar que carrega o cardápio/configuração reais via IPC (não a
+     implementação local) e que salvar a configuração persiste de fato em
+     `config.json`.
+  5. Abrir o painel KDS (feature-13) e confirmar que a listagem de pedidos
+     ativos aparece com tempo de espera calculado, e que o indicador de
+     conexão do WhatsApp reflete o status real.
+  6. Enviar uma mensagem de texto real via WhatsApp para o número
+     conectado, confirmar que uma resposta real gerada pela IA chega de
+     volta ao remetente, sem qualquer intervenção manual no processo.
+  7. Fechar um pedido através da conversa real (fluxo completo até
+     `pedidoRegistrado: true`) e confirmar que o painel KDS aberto
+     atualiza a lista de pedidos automaticamente, sem recarregar a página
+     (validação de R9/R18).
+  8. No painel KDS, alterar o status de um pedido e atribuir um motoboy, e
+     confirmar que a mudança persiste no banco real e é refletida
+     imediatamente na UI.
+  9. Desconectar a sessão do WhatsApp (ex.: remover o aparelho conectado
+     pelo celular) e confirmar que o indicador de conexão do painel KDS
+     muda para "desconectado" em tempo real, sem recarregar a página
+     (validação de R19).
+- **Cierre:** feature-14 marcada `done` em `feature_list.json`. Todas as
+  14 features `sdd: true` do backlog agora `done`, exceto feature-8
+  (`pending`).

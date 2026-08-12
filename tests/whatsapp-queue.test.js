@@ -63,6 +63,28 @@ describe("Conexão WhatsApp e fila de mensagens", () => {
       expect(erroRecebido).toBeInstanceOf(AuthenticationError);
       closeDatabase(db);
     });
+
+    it("remove um listener registrado via off sem afetar outros listeners do mesmo evento", () => {
+      const adapter = criarAdapterDuble();
+      const db = openDatabase(join(dir, "app.sqlite"));
+      const client = createWhatsAppClient(adapter, { db });
+
+      const chamadasCb1 = [];
+      const chamadasCb2 = [];
+      const cb1 = (status) => chamadasCb1.push(status);
+      const cb2 = (status) => chamadasCb2.push(status);
+
+      client.on("connection-status-changed", cb1);
+      client.on("connection-status-changed", cb2);
+
+      client.off("connection-status-changed", cb1);
+
+      adapter.emitirComoAdapter("ready");
+
+      expect(chamadasCb1).toEqual([]);
+      expect(chamadasCb2).toEqual(["conectado"]);
+      closeDatabase(db);
+    });
   });
 
   describe("MessageQueue — FIFO sequencial", () => {
