@@ -125,7 +125,7 @@
         "tests/desktop-build.test.js valida a integridade do empacotamento e inicialização do executável."
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 9,

@@ -4,7 +4,14 @@
 // biblioteca real (R11) — nenhum outro arquivo do domínio deve importá-la.
 import { EventEmitter } from "node:events";
 
-import { Client, LocalAuth } from "whatsapp-web.js";
+// `whatsapp-web.js` é um módulo CommonJS. Em runtime ESM real do Node, o
+// loader não consegue inferir com segurança quais propriedades do
+// `module.exports` viram named exports — por isso importamos o default
+// export inteiro e desestruturamos `Client`/`LocalAuth` a partir dele,
+// conforme sugerido pela própria mensagem de erro do Node nesse cenário.
+import whatsappWebJs from "whatsapp-web.js";
+
+const { Client, LocalAuth } = whatsappWebJs;
 
 import { WhatsAppError } from "../errors.js";
 

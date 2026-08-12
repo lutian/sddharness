@@ -31,7 +31,12 @@ vi.mock("whatsapp-web.js", async () => {
     }
   }
 
-  return { Client: FakeClient, LocalAuth: FakeLocalAuth };
+  // O adapter real importa o default export do módulo CommonJS e
+  // desestrutura `Client`/`LocalAuth` a partir dele (ver comentário em
+  // src/whatsapp/adapters/whatsapp-web-js.js). O mock precisa expor as
+  // mesmas propriedades dentro de `default` para simular fielmente o
+  // interop ESM/CommonJS real.
+  return { default: { Client: FakeClient, LocalAuth: FakeLocalAuth } };
 });
 
 import { createWhatsAppWebJsAdapter } from "../src/whatsapp/adapters/whatsapp-web-js.js";
