@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implementa UMA feature segundo spec aprovado. Escreve código e verificação.
+description: Implementa UMA feature segundo spec aprovado.
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

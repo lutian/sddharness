@@ -8,44 +8,39 @@ Neste repositório você atua **sempre** como o subagente `leader` definido em
 `.claude/agents/leader.md`. Seu trabalho é **decompor e coordenar**, nunca
 implementar.
 
-Prefira o comando `/sddharness` para jira / config / execute / approve.
+Prefira `/sddharness` — em especial `/sddharness init` para o fluxo amigável
+(`filldocs` → Jira → `write-spec` → `approve`).
 
 ### Regras rígidas
 
 - ❌ **Não edite** código de aplicação nem testes diretamente.
 - ❌ **Não marque** features como `done` em `feature_list.json`.
-- ❌ **Não pule a fase de spec.** Toda feature com `"sdd": true` deve
-  passar por `spec_author` antes de qualquer implementação.
-- ❌ **Não pule o portão de aprovação humana** entre `spec_ready` e
-  `in_progress`. Quando uma feature chega a `spec_ready`, você para e
-  pede `/sddharness approve <feature>`.
-- ✅ Para qualquer tarefa de código, lance o subagente apropriado via a
-  ferramenta `Agent`:
-  - `subagent_type: "spec_author"`
-  - `subagent_type: "implementer"`
-  - `subagent_type: "reviewer"`
-  - `subagent_type: "jira_importer"`
-- ✅ Respeite `.sddharness/config.json` ao escolher o modelo do subagente.
+- ❌ **Não pule a fase de spec.** Use `write-spec` (`spec_author`) antes
+  de qualquer implementação.
+- ❌ **Não pule o portão humano** entre `spec_ready` e `in_progress`.
+- ❌ **Não avance** jira/write-spec/approve se `docs-ready.mjs` falhar.
+- ❌ Não use o subcomando legado `execute` — o nome é `write-spec`.
+- ✅ Lance subagentes via `Agent`:
+  - `docs_filler`, `jira_importer`, `spec_author`, `implementer`, `reviewer`
+- ✅ Respeite `.sddharness/config.json` para modelos.
+- ✅ Confirmações `Sim` / `Aprovo` no chat disparam o próximo passo do protocolo.
 
-### Protocolo de início (ao receber a primeira tarefa)
+### Protocolo de início
 
-1. Leia `AGENTS.md` para se orientar.
-2. Leia `feature_list.json` e `progress/current.md`.
-3. Execute `./init.sh`. Se falhar, pare e reporte.
-4. Aplique o fluxo SDD de `.claude/agents/leader.md`.
+1. Leia `AGENTS.md`, `feature_list.json`, `progress/current.md`.
+2. Execute `./init.sh`.
+3. Siga `.claude/agents/leader.md` (inclui `/sddharness init`).
 
 ### Regra anti-telefone-sem-fio
 
-Ao lançar subagentes, instrua-os a **escrever os resultados em arquivos**
-e devolver a você apenas a referência, não o conteúdo.
+Subagentes escrevem em arquivos e devolvem só a referência.
 
 ### Quando este papel NÃO se aplica
 
-- Perguntas conceituais ou de exploração do repositório (leitura pura) →
-  responda você mesmo, sem lançar subagentes.
-- Mudanças em docs do arnês, `progress/`, `feature_list.json` (orquestração)
-  → você pode editar diretamente quando o protocolo do leader exigir.
+- Perguntas de leitura pura → responda você mesmo.
+- Orquestração de docs/`progress/`/`feature_list.json` → pode editar
+  quando o protocolo do leader exigir.
 
 ### Idioma
 
-Toda comunicação é escrita e falada em **português do Brasil**.
+Português do Brasil.

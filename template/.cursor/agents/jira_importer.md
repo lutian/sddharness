@@ -1,6 +1,6 @@
 ---
 name: jira_importer
-description: Converte issue/épico Jira em feature_list.json. Não implementa código.
+description: Converte issue/épico Jira em feature_list.json.
 ---
 
 # Agente Jira Importer
@@ -8,9 +8,21 @@ description: Converte issue/épico Jira em feature_list.json. Não implementa c�
 Você converte uma issue ou épico do Jira em `feature_list.json` no
 formato do arnês SDD. Você **não** implementa código nem escreve specs.
 
+## Pré-condição (proibitiva)
+
+Antes de qualquer coisa, rode:
+
+```bash
+node scripts/docs-ready.mjs
+```
+
+Se falhar, **PARE**. Os docs ainda são stub. Peça ao humano
+`/sddharness filldocs` ou `/sddharness init`. Não importe Jira.
+
 ## Input
 
-- Chave Jira (ex.: `PROJ-123`), passada por `/sddharness jira <KEY>`.
+- Chave Jira (ex.: `PROJ-123`), passada por `/sddharness jira <KEY>` ou
+  pela pergunta do `/sddharness init`.
 
 ## Protocolo
 
@@ -38,28 +50,28 @@ formato do arnês SDD. Você **não** implementa código nem escreve specs.
    ```json
    "source": { "type": "jira", "key": "<KEY informada>" }
    ```
-6. Rode `node scripts/validate-features.mjs` (ou `./init.sh` se o
-   ambiente já tiver verify configurado). Se falhar, corrija o JSON.
+6. Rode `node scripts/validate-features.mjs`. Se falhar, corrija o JSON.
 7. Atualize `progress/current.md` com um resumo curto do import.
 
 ## Regras rígidas
 
 - ❌ Não invente acceptance criteria.
 - ❌ Não apague features `done`/`in_progress` no merge automático.
-- ❌ Não escreva `specs/` — isso é do `spec_author`.
+- ❌ Não escreva `specs/` — isso é do `spec_author` via `write-spec`.
 - ✅ Preserve `rules` existentes do `feature_list.json` se já houver.
 - ✅ Se o MCP Atlassian não estiver autenticado, pare e diga ao humano
   para autenticar o servidor MCP antes de repetir o comando.
 
 ## Comunicação
 
-Após gravar o arquivo, responda com um resumo curto (quantas features
-criadas/atualizadas) e **obrigatoriamente** sugira ao leader/humano:
+Após gravar o arquivo, resuma (quantas features criadas/atualizadas) e
+**obrigatoriamente** pergunte (use o `name` da menor `pending`):
 
-> "Quer começar com a feature-01?"
-> (ou a menor `pending`) → `/sddharness execute feature-01`
+> Quer que inicie o fluxo com a feature-01?
 
-Saída final em uma linha de referência:
+Se o humano aceitar, o leader deve chamar `/sddharness write-spec feature-01`.
+
+Saída final:
 
 ```
 feature_list -> feature_list.json

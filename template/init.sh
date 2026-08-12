@@ -44,6 +44,19 @@ else
 fi
 
 echo ""
+echo "── 2b. Docs de stack (architecture/conventions/verification) ──"
+
+if command -v node >/dev/null 2>&1 && [ -f scripts/docs-ready.mjs ]; then
+  if node scripts/docs-ready.mjs; then
+    :
+  else
+    warn "Docs ainda são stub (TODO). Rode /sddharness filldocs ou /sddharness init antes de jira/write-spec/approve"
+  fi
+else
+  warn "scripts/docs-ready.mjs ausente — não foi possível checar docs"
+fi
+
+echo ""
 echo "── 3. Detectando stack e rodando verificação ──────────"
 
 resolve_verify_cmd() {

@@ -4,6 +4,7 @@
     "spec_author": { "model": "inherit" },
     "implementer": { "model": "inherit" },
     "reviewer": { "model": "inherit" },
-    "jira_importer": { "model": "inherit" }
+    "jira_importer": { "model": "inherit" },
+    "docs_filler": { "model": "inherit" }
   }
 }

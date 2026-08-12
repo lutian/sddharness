@@ -1,5 +1,5 @@
 ---
-description: Arnês SDD — jira | config | execute | approve
+description: Arnês SDD — init | filldocs | jira | write-spec | approve | config
 ---
 
 # /sddharness
@@ -9,66 +9,85 @@ Comando unificado do mini-arnês Spec Driven Development.
 ## Uso
 
 ```
+/sddharness init
+/sddharness filldocs
 /sddharness jira <KEY>
-/sddharness config <agente> model <modelo>
-/sddharness execute <feature-XX>
+/sddharness write-spec <feature-XX>
 /sddharness approve <feature-XX>
+/sddharness config <agente> model <modelo>
 ```
 
 `$ARGUMENTS` contém o restante da linha após `/sddharness`.
 
+**Nota:** a CLI `./bin/sddharness init <path>` instala o skeleton. Este
+slash `/sddharness init` inicia a sessão SDD amigável no projeto alvo.
+
+## Gate de docs (proibitivo)
+
+Antes de `jira`, `write-spec` e `approve`, rode `node scripts/docs-ready.mjs`.
+Se falhar, **PARE** e peça `/sddharness filldocs` ou `/sddharness init`.
+
 ## Roteamento
 
 Parse `$ARGUMENTS` e execute **exatamente um** dos fluxos abaixo.
+Confirmações no chat (`Sim` / `Aprovo`) a perguntas canônicas pendentes
+contam como o subcomando correspondente.
 
-### 1. `jira <KEY>`
+### 1. `init`
 
-1. Atue como (ou lance) o agente `jira_importer`.
-2. Use o MCP Atlassian para ler a issue/épico `<KEY>`.
-3. Gere ou atualize `feature_list.json` (merge por `jira_key`).
-4. Valide com `node scripts/validate-features.mjs`.
-5. Ao terminar, pergunte ao humano:
-   > "Quer começar com a feature-01?"
-   > Se sim → `/sddharness execute feature-01`
-   (use a menor feature `pending` se não for `feature-01`).
+Orquestrador amigável (atue como `leader`):
 
-### 2. `config <agente> model <modelo>`
+1. Rode `./init.sh` (ambiente).
+2. Lance `docs_filler` (filldocs).
+3. Se `docs_blocked` → mensagem proibitiva; **não** peça Jira.
+4. Se `docs_ready` → pergunte: `Insira o id da tarefa do Jira`
+5. Com KEY → fluxo `jira`.
+6. Após import → pergunte: `Quer que inicie o fluxo com a feature-01?`
+7. Se Sim → fluxo `write-spec feature-01`.
+8. Em `spec_ready` → `Aprova a feature-01 de "{title}"?`
+9. Se Sim/Aprovo → fluxo `approve feature-01`.
 
-Agentes válidos: `leader`, `spec_author`, `implementer`, `reviewer`, `jira_importer`.
+### 2. `filldocs`
 
-1. Leia `.sddharness/config.json` (crie se não existir a partir do template).
-2. Defina `agents.<agente>.model` = `<modelo>`.
-3. Grave o arquivo e confirme em uma linha:
-   `config -> <agente> = <modelo>`
+1. Lance `docs_filler`.
+2. `docs_ready` → ok (pode pedir id Jira ou sugerir `init`).
+3. `docs_blocked` → bloqueio claro (preenchimento manual obrigatório).
 
-Não altere outros agentes.
+### 3. `jira <KEY>`
 
-### 3. `execute <feature-XX>`
+1. Exija docs prontos (`docs-ready.mjs`).
+2. Lance `jira_importer`.
+3. Ao terminar, pergunte:
+   > Quer que inicie o fluxo com a feature-01?
+   > (Sim → `/sddharness write-spec feature-01`)
 
-1. Atue como o agente `leader` (leia `.claude/agents/leader.md` ou
-   `.cursor/agents/leader.md` e `.sddharness/config.json`).
-2. Localize a feature com `name == <feature-XX>` em `feature_list.json`.
-3. Siga o protocolo `execute` do leader:
-   - `pending` → lance `spec_author` → pare em `spec_ready` e diga:
-     > "Analise a `<feature-XX>` e se estiver ok pode rodar `/sddharness approve <feature-XX>`."
-   - `spec_ready` → apenas lembre o approve (não implemente).
-   - `in_progress` → pergunte se retoma.
-   - `done` / `blocked` → informe o estado; não avance sozinho.
+### 4. `write-spec <feature-XX>`
 
-### 4. `approve <feature-XX>`
+1. Exija docs prontos.
+2. Atue como `leader`: se `pending` → `spec_author` → `spec_ready` →
+   pergunte `Aprova a <feature-XX> de "{title}"?`
+3. Se já `spec_ready` → só lembre a approve.
+4. Nunca implemente código neste subcomando.
 
-1. Atue como o agente `leader`.
-2. Exija `status == spec_ready`.
-3. Transicione para `in_progress`, lance `implementer` e depois `reviewer`.
-4. Se APPROVED, feche a feature (`done`) via segunda invocação do implementer.
-5. Sugira a próxima:
-   > "Quer começar com a `<próxima>`?" → `/sddharness execute <próxima>`
+### 5. `approve <feature-XX>`
+
+1. Exija docs prontos e status `spec_ready`.
+2. `in_progress` → `implementer` → `reviewer` → `done` se APPROVED.
+3. Pergunte se inicia o fluxo da próxima feature.
+
+### 6. `config <agente> model <modelo>`
+
+Agentes válidos: `leader`, `spec_author`, `implementer`, `reviewer`,
+`jira_importer`, `docs_filler`.
+
+1. Atualize `.sddharness/config.json` → `agents.<agente>.model`.
+2. Confirme: `config -> <agente> = <modelo>`
 
 ## Regras
 
 - Uma feature por vez.
 - Nunca pule o portão humano entre `spec_ready` e `in_progress`.
-- Resultados de subagentes vivem em disco (`specs/`, `progress/`); o chat
-  só carrega referências.
+- Não existe subcomando `execute` — use `write-spec`.
+- Resultados de subagentes vivem em disco; chat só com referências.
 - Idioma: português do Brasil.
-- Se `$ARGUMENTS` for inválido ou vazio, mostre o uso acima e pare.
+- Se `$ARGUMENTS` for inválido ou vazio, mostre o uso e pare.
