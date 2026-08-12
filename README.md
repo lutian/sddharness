@@ -6,21 +6,13 @@ repositório, orquestre features com agentes e use o mesmo comando no
 
 Pilares:
 
-1. **O repositório é o sistema** — estado em `feature_list.json`, `specs/`, `progress/`.
-2. **Multi-agente** — o leader coordena; subagentes escrevem resultados em disco.
+1. **O repositório é o sistema** — `feature_list.json`, `specs/`, `progress/`.
+2. **Multi-agente** — leader coordena; resultados em disco.
 3. **Portão humano** — nada de código antes de `/sddharness approve`.
-4. **Verificação** — `./init.sh` no projeto alvo tem que ficar verde.
-5. **Docs de stack obrigatórios** — `architecture` / `conventions` / `verification` prontos antes de Jira/specs.
-
-## Para quem
-
-Qualquer stack (C#, Ionic/Angular, Node, n8n, Python, etc.). Os agentes
-leem `docs/architecture.md`, `docs/conventions.md` e
-`docs/verification.md` **do seu projeto**.
+4. **Docs de stack** — architecture / conventions / verification prontos.
+5. **Git por feature** — branch mãe + worktree em `.worktrees/` + merge ao concluir.
 
 ## Instalar o skeleton (CLI)
-
-A partir do clone deste repositório:
 
 ```bash
 ./install.sh /caminho/do-seu-projeto
@@ -28,159 +20,84 @@ A partir do clone deste repositório:
 ./bin/sddharness init /caminho/do-seu-projeto
 ```
 
-Isso **só copia** o arnês (merge conservador). Não confunda com o slash
-`/sddharness init` (sessão amigável no projeto alvo).
+Slash `/sddharness init` no projeto alvo = sessão amigável (não é a CLI).
 
-### O que a instalação cria
-
-| Caminho | Função |
-|---------|--------|
-| `AGENTS.md` / `CLAUDE.md` / `CHECKPOINTS.md` | Entrada e checkpoints |
-| `feature_list.json` | Fila de features |
-| `init.sh` | Bootstrap/verificação |
-| `docs/*.md` | Specs SDD + stubs de stack (preencher via filldocs) |
-| `specs/` / `progress/` | Specs e sessão |
-| `scripts/validate-features.mjs` | Valida feature_list |
-| `scripts/docs-ready.mjs` | Gate: docs sem marcador TODO |
-| `.sddharness/config.json` | Modelos + `verifyCmd` |
-| `.cursor/` e `.claude/` | Comando `/sddharness` e agents |
-
-## Fluxo recomendado (amigável)
-
-No Cursor ou Claude Code, na raiz do **projeto alvo**:
+## Fluxo recomendado
 
 ```
 /sddharness init
 ```
 
-1. Roda `filldocs` (`docs_filler`) — analisa o codebase e preenche os 3 docs.
-2. Se o projeto estiver **vazio**, os stubs permanecem e o arnês **bloqueia**
-   (você precisa preencher os docs manualmente).
-3. Se docs ok → pergunta: `Insira o id da tarefa do Jira`
-4. Com a KEY → importa (`jira_importer`).
-5. Pergunta: `Quer que inicie o fluxo com a feature-01?`
-6. Se **Sim** → `/sddharness write-spec feature-01` (`spec_author`).
-7. Em `spec_ready` pergunta: `Aprova a feature-01 de "{título}"?`
-8. Se **Sim/Aprovo** → `/sddharness approve feature-01` (implementer + reviewer).
+1. `filldocs` — preenche os 3 docs a partir do codebase (ou bloqueia se vazio).
+2. Pede o id da tarefa Jira → importa features.
+3. Pergunta: `Vou criar a branch para começar a trabalhar a partir da branch atual ({nome}), posso continuar ou quer mudar de branch?`
+4. Se continuar: `Criando a branch "feature/JIRA-123-…"…` (a partir da branch atual).
+5. `Quer que inicie o fluxo com a feature-01?`
+6. Sim → `Criando o worktree "feature/JIRA-123-01-…"…` + `write-spec`.
+7. `Aprova a feature-01 de "{título}"?`
+8. Sim → implementa no worktree → `Fazendo merge do worktree "…" na branch "…"…` → próxima feature.
 
-### Subcomandos explícitos
+### Subcomandos
 
 ```
 /sddharness filldocs
 /sddharness jira PROJ-123
 /sddharness write-spec feature-01
 /sddharness approve feature-01
-/sddharness config implementer model claude-opus-4
+/sddharness config implementer model <slug>
 ```
 
-Não existe `execute` — o nome correto para criar specs é **`write-spec`**.
+Não existe `execute` — use **`write-spec`**.
 
-### Gate proibitivo de docs
+### Git / worktrees
 
-Se `docs/architecture.md`, `conventions.md` ou `verification.md` ainda
-tiverem a seção `## TODO — preencha após instalar o arnês`, então
-`jira` / `write-spec` / `approve` **não avançam**. Cheque com:
+Scripts:
+
+```bash
+node scripts/git-session.mjs current-branch
+node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node scripts/git-session.mjs merge-worktree --feature feature-01
+```
+
+| Artefato | Exemplo |
+|----------|---------|
+| Branch mãe | `feature/JIRA-123-atualizacao-servico-payment` |
+| Worktree/branch | `feature/JIRA-123-01-implementando-adapters` |
+| Path | `.worktrees/JIRA-123-01-implementando-adapters` |
+
+Arnês (`specs/`, `feature_list`, `progress`) na **raiz**. Código da feature no **worktree**. Sessão em `.sddharness/session.json` (gitignored).
+
+### Gate de docs
 
 ```bash
 node scripts/docs-ready.mjs
 ```
-
-## Fluxo SDD
-
-```
-filldocs → jira → write-spec → ⏸ humano → approve → done
-```
-
-| Estado | Significado |
-|--------|-------------|
-| `pending` | Sem spec |
-| `spec_ready` | Spec pronto; aguarda approve |
-| `in_progress` | Implementação (máx. 1) |
-| `done` | Verificação verde + review |
-| `blocked` | Travado (`progress/current.md`) |
 
 ## Agentes
 
 | Agente | Papel |
 |--------|--------|
-| `leader` | Orquestra; perguntas amigáveis Sim/Aprova |
-| `docs_filler` | Preenche architecture/conventions/verification |
-| `jira_importer` | Issue/épico → `feature_list.json` |
-| `spec_author` | Specs EARS (`write-spec`) |
-| `implementer` | Código + verificação (`approve`) |
-| `reviewer` | Aprova/rejeita rastreabilidade |
+| `leader` | Orquestra; git + perguntas amáveis |
+| `docs_filler` | Preenche docs de stack |
+| `jira_importer` | Jira → `feature_list.json` |
+| `spec_author` | Specs (`write-spec`) |
+| `implementer` | Código no worktree |
+| `reviewer` | Review |
 
-## Schema de `feature_list.json`
+## Schema / config
 
-```json
-{
-  "project": "meu-app",
-  "description": "Descrição curta",
-  "source": { "type": "jira", "key": "PROJ-123" },
-  "rules": {
-    "one_feature_at_a_time": true,
-    "require_tests_to_close": true,
-    "require_approved_spec_to_implement": true,
-    "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
-    "sdd_required_when": "feature has \"sdd\": true"
-  },
-  "features": [
-    {
-      "id": 1,
-      "name": "feature-01",
-      "title": "Título",
-      "description": "O quê entregar",
-      "acceptance": ["Critério verificável"],
-      "jira_key": "PROJ-456",
-      "sdd": true,
-      "status": "pending"
-    }
-  ]
-}
-```
+Ver `schema/feature_list.schema.json`. Modelos em `.sddharness/config.json`
+(inclui `docs_filler`). `verifyCmd` opcional.
 
-Schema: [`schema/feature_list.schema.json`](schema/feature_list.schema.json).
-
-## Config de modelos
-
-```json
-{
-  "agents": {
-    "leader": { "model": "inherit" },
-    "docs_filler": { "model": "inherit" },
-    "spec_author": { "model": "inherit" },
-    "implementer": { "model": "inherit" },
-    "reviewer": { "model": "inherit" },
-    "jira_importer": { "model": "inherit" }
-  },
-  "verifyCmd": "npm test"
-}
-```
-
-## Validação
+## Validação / testes do kit
 
 ```bash
 ./init.sh
-./bin/sddharness validate /caminho/do-seu-projeto
 node scripts/docs-ready.mjs
+npm test
 ```
 
 ## Cursor vs Claude Code
 
-| | Cursor | Claude Code |
-|--|--------|-------------|
-| Comando | `.cursor/commands/sddharness.md` | `.claude/commands/sddharness.md` |
-| Agentes | `.cursor/agents/` | `.claude/agents/` |
-| Entry | `AGENTS.md` | `CLAUDE.md` + `AGENTS.md` |
-
-## Desenvolvimento deste kit
-
-```bash
-npm test
-./install.sh /tmp/sddharness-demo
-./bin/sddharness validate /tmp/sddharness-demo
-```
-
-## Licença / uso
-
-Uso interno / time.
+Mesmo slash `/sddharness` em `.cursor/commands` e `.claude/commands`.

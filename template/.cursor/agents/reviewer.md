@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Aprova ou rejeita o trabalho do implementer. Não edita código.
+description: Aprova ou rejeita. Não edita código.
 ---
 
 # Agente Revisor

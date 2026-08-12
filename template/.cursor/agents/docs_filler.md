@@ -1,6 +1,6 @@
 ---
 name: docs_filler
-description: Preenche docs architecture/conventions/verification a partir do codebase.
+description: Preenche docs architecture/conventions/verification.
 ---
 
 # Agente Docs Filler

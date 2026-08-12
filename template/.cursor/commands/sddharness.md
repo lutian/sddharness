@@ -17,77 +17,75 @@ Comando unificado do mini-arnês Spec Driven Development.
 /sddharness config <agente> model <modelo>
 ```
 
-`$ARGUMENTS` contém o restante da linha após `/sddharness`.
+`$ARGUMENTS` = resto da linha após `/sddharness`.
 
-**Nota:** a CLI `./bin/sddharness init <path>` instala o skeleton. Este
-slash `/sddharness init` inicia a sessão SDD amigável no projeto alvo.
+CLI `./bin/sddharness init <path>` = instalar skeleton.  
+Slash `/sddharness init` = sessão amigável.
 
-## Gate de docs (proibitivo)
+## Gate de docs
 
-Antes de `jira`, `write-spec` e `approve`, rode `node scripts/docs-ready.mjs`.
-Se falhar, **PARE** e peça `/sddharness filldocs` ou `/sddharness init`.
+Antes de `jira` / `write-spec` / `approve`: `node scripts/docs-ready.mjs`.
+
+## Git (obrigatório no fluxo)
+
+```bash
+node scripts/git-session.mjs current-branch
+node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node scripts/git-session.mjs merge-worktree --feature feature-01
+```
+
+Frases canônicas:
+
+- `Vou criar a branch para começar a trabalhar a partir da branch atual ({nome}), posso continuar ou quer mudar de branch?`
+- `Criando a branch "{parentBranch}"…`
+- `Criando o worktree "{worktreeBranch}"…`
+- `Fazendo merge do worktree "{worktreeBranch}" na branch "{parentBranch}"…`
+
+Arnês na raiz; código no worktree (`.worktrees/`).
 
 ## Roteamento
 
-Parse `$ARGUMENTS` e execute **exatamente um** dos fluxos abaixo.
-Confirmações no chat (`Sim` / `Aprovo`) a perguntas canônicas pendentes
-contam como o subcomando correspondente.
-
 ### 1. `init`
 
-Orquestrador amigável (atue como `leader`):
-
-1. Rode `./init.sh` (ambiente).
-2. Lance `docs_filler` (filldocs).
-3. Se `docs_blocked` → mensagem proibitiva; **não** peça Jira.
-4. Se `docs_ready` → pergunte: `Insira o id da tarefa do Jira`
-5. Com KEY → fluxo `jira`.
-6. Após import → pergunte: `Quer que inicie o fluxo com a feature-01?`
-7. Se Sim → fluxo `write-spec feature-01`.
-8. Em `spec_ready` → `Aprova a feature-01 de "{title}"?`
-9. Se Sim/Aprovo → fluxo `approve feature-01`.
+1. `./init.sh` + `docs_filler`.
+2. Blocked → pare.
+3. Ready → `Insira o id da tarefa do Jira`
+4. KEY → `jira`.
+5. `current-branch` → pergunta da base atual.
+6. Continuar → `Criando a branch "…"…` + `ensure-parent`.
+7. `Quer que inicie o fluxo com a feature-01?`
+8. Sim → `write-spec` → `Aprova…?` → `approve` (com merge) → próxima.
 
 ### 2. `filldocs`
 
-1. Lance `docs_filler`.
-2. `docs_ready` → ok (pode pedir id Jira ou sugerir `init`).
-3. `docs_blocked` → bloqueio claro (preenchimento manual obrigatório).
+Lance `docs_filler`.
 
 ### 3. `jira <KEY>`
 
-1. Exija docs prontos (`docs-ready.mjs`).
-2. Lance `jira_importer`.
-3. Ao terminar, pergunte:
-   > Quer que inicie o fluxo com a feature-01?
-   > (Sim → `/sddharness write-spec feature-01`)
+1. Docs prontos → `jira_importer`.
+2. Leader (não o importer) conduz pergunta da base + `ensure-parent`.
+3. Depois: `Quer que inicie o fluxo com a feature-01?`
 
 ### 4. `write-spec <feature-XX>`
 
-1. Exija docs prontos.
-2. Atue como `leader`: se `pending` → `spec_author` → `spec_ready` →
-   pergunte `Aprova a <feature-XX> de "{title}"?`
-3. Se já `spec_ready` → só lembre a approve.
-4. Nunca implemente código neste subcomando.
+1. Docs + session com parentBranch.
+2. `Criando o worktree "…"…` + `add-worktree`.
+3. `spec_author` (specs na raiz) → `spec_ready` → pergunta approve.
 
 ### 5. `approve <feature-XX>`
 
-1. Exija docs prontos e status `spec_ready`.
-2. `in_progress` → `implementer` → `reviewer` → `done` se APPROVED.
-3. Pergunte se inicia o fluxo da próxima feature.
+1. `implementer` (código no worktreePath) → `reviewer` → `done`.
+2. `Fazendo merge do worktree "…" na branch "{parent}"…` + `merge-worktree`.
+3. Próxima feature.
 
 ### 6. `config <agente> model <modelo>`
 
-Agentes válidos: `leader`, `spec_author`, `implementer`, `reviewer`,
-`jira_importer`, `docs_filler`.
-
-1. Atualize `.sddharness/config.json` → `agents.<agente>.model`.
-2. Confirme: `config -> <agente> = <modelo>`
+Agentes: `leader`, `spec_author`, `implementer`, `reviewer`, `jira_importer`, `docs_filler`.
 
 ## Regras
 
 - Uma feature por vez.
-- Nunca pule o portão humano entre `spec_ready` e `in_progress`.
-- Não existe subcomando `execute` — use `write-spec`.
-- Resultados de subagentes vivem em disco; chat só com referências.
-- Idioma: português do Brasil.
-- Se `$ARGUMENTS` for inválido ou vazio, mostre o uso e pare.
+- Sem `execute` — use `write-spec`.
+- Confirmações `Sim`/`Aprovo`/`continuar` no chat valem como o próximo passo.
+- PT-BR.

@@ -14,30 +14,29 @@ do projeto — não assuma runtime, framework ou runner específicos.
   lançado você.
 - Existem os 3 arquivos em `specs/<name>/`: `requirements.md`,
   `design.md`, `tasks.md`. Se faltar algum, pare.
+- Se o leader informar `worktreePath` (ou existir em
+  `.sddharness/session.json` → `features[<name>].worktreePath`), **todo
+  código de aplicação e testes do projeto** é editado nesse worktree.
+  Specs/`feature_list`/`progress`/`docs` do arnês permanecem na **raiz**.
 
 ## Protocolo
 
 1. **Leia** `AGENTS.md`, `docs/architecture.md`, `docs/conventions.md`,
-   `docs/specs.md`, `docs/verification.md`.
-2. **Leia o spec completo** em `specs/<name>/`. Cada `T<n>` de
-   `tasks.md` é o que você vai fazer; cada `R<n>` de `requirements.md` é
-   o que deve ficar verdadeiro ao final.
-3. **Anote** em `progress/current.md`:
-   - `Feature em andamento: <id> — <name>`
-   - `Plano: as tasks T1..Tn de specs/<name>/tasks.md`
+   `docs/specs.md`, `docs/verification.md` (na raiz).
+2. **Leia o spec completo** em `specs/<name>/` (raiz).
+3. **Anote** em `progress/current.md` (raiz) a feature e o `worktreePath`.
 4. **Para cada task `T<n>` em ordem**:
-   a. Implemente a mudança indicada pela task.
-   b. Se a task incluir verificação/teste, escreva-a conforme
-      `docs/verification.md`.
-   c. Marque `[x] T<n>` em `tasks.md`.
-5. **Verifique** executando `./init.sh`. Se falhar → volte ao passo 4.
-6. **Rastreabilidade**: confirme que cada `R<n>` está coberto por pelo
-   menos uma evidência de verificação concreta. Anote isso em
-   `progress/impl_<name>.md` (mapa `R<n> → evidência`).
+   a. Implemente a mudança no **worktree** (se houver).
+   b. Testes/verificação conforme `docs/verification.md` (no worktree
+      quando for código do app).
+   c. Marque `[x] T<n>` em `tasks.md` (raiz).
+5. **Verifique** no worktree (ou `./init.sh` na raiz se o contrato do
+   projeto exigir). Se falhar → volte ao passo 4.
+6. **Rastreabilidade** em `progress/impl_<name>.md` (raiz).
 7. **Não marque `done` você mesmo.** Espere o reviewer.
-8. Se o reviewer aprovar (o leader dirá isso a você em uma segunda
-   invocação): mude o status para `done` e mova o resumo para
-   `progress/history.md`.
+8. Se o reviewer aprovar (segunda invocação): marque `done` e atualize
+   `progress/history.md`. Faça **commit no worktree** se ainda houver
+   mudanças pendentes (o leader fará o merge em seguida).
 
 ## Regras rígidas
 

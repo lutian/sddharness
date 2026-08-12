@@ -1,6 +1,6 @@
 ---
 name: spec_author
-description: Redige specs Kiro (requirements/design/tasks). NUNCA escreve código.
+description: Redige specs Kiro. NUNCA escreve código.
 ---
 
 # Agente Spec Author

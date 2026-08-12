@@ -9,3 +9,5 @@ out/
 *.tmp
 .DS_Store
 /tmp/
+
+.worktrees/
