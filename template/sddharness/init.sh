@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# init.sh — Verificação e inicialização do ambiente (stack-agnóstico)
-#
-# Executado pelo agente ao COMEÇAR uma sessão e antes de declarar `done`.
-# Saída: blocos [OK]/[FAIL]/[WARN] e exit code != 0 se não estiver pronto.
+# sddharness/init.sh — Verificação do ambiente (stack-agnóstico)
+# Rode a partir da raiz OU via ./sddharness/init.sh
+# Opera sempre com cwd = raiz do projeto (pai de sddharness/).
 
 set -u
 RED='\033[0;31m'
@@ -15,12 +14,23 @@ warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$1"; }
 fail()  { printf "${RED}[FAIL]${NC}  %s\n" "$1"; }
 
 EXIT_CODE=0
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+H=sddharness
 
 echo "── 1. Verificando arquivos base do arnês ──────────────"
 
-for f in AGENTS.md feature_list.json progress/current.md docs/architecture.md docs/conventions.md docs/verification.md docs/specs.md CHECKPOINTS.md .sddharness/config.json; do
+for f in \
+  "$H/AGENTS.md" \
+  "$H/feature_list.json" \
+  "$H/progress/current.md" \
+  "$H/docs/architecture.md" \
+  "$H/docs/conventions.md" \
+  "$H/docs/verification.md" \
+  "$H/docs/specs.md" \
+  "$H/CHECKPOINTS.md" \
+  ".sddharness/config.json"
+do
   if [ ! -f "$f" ]; then
     fail "Falta arquivo base: $f"
     EXIT_CODE=1
@@ -33,7 +43,7 @@ echo ""
 echo "── 2. Validando feature_list.json e specs ─────────────"
 
 if command -v node >/dev/null 2>&1; then
-  if node scripts/validate-features.mjs; then
+  if node "$H/scripts/validate-features.mjs"; then
     :
   else
     EXIT_CODE=1
@@ -46,14 +56,14 @@ fi
 echo ""
 echo "── 2b. Docs de stack (architecture/conventions/verification) ──"
 
-if command -v node >/dev/null 2>&1 && [ -f scripts/docs-ready.mjs ]; then
-  if node scripts/docs-ready.mjs; then
+if command -v node >/dev/null 2>&1 && [ -f "$H/scripts/docs-ready.mjs" ]; then
+  if node "$H/scripts/docs-ready.mjs"; then
     :
   else
     warn "Docs ainda são stub (TODO). Rode /sddharness filldocs ou /sddharness init antes de jira/write-spec/approve"
   fi
 else
-  warn "scripts/docs-ready.mjs ausente — não foi possível checar docs"
+  warn "sddharness/scripts/docs-ready.mjs ausente — não foi possível checar docs"
 fi
 
 echo ""
@@ -79,7 +89,6 @@ resolve_verify_cmd() {
     fi
   fi
 
-  # .NET
   if command -v find >/dev/null 2>&1 && find . -maxdepth 3 -name '*.csproj' -print -quit | grep -q .; then
     if command -v dotnet >/dev/null 2>&1; then
       echo "dotnet test"
@@ -87,7 +96,6 @@ resolve_verify_cmd() {
     fi
   fi
 
-  # Node / Ionic / Bun
   if [ -f package.json ]; then
     if command -v jq >/dev/null 2>&1; then
       local has_test
@@ -114,7 +122,6 @@ resolve_verify_cmd() {
     fi
   fi
 
-  # Python
   if [ -f pyproject.toml ] || [ -f pytest.ini ] || [ -d tests ] && ls tests/test_*.py >/dev/null 2>&1; then
     if command -v pytest >/dev/null 2>&1; then
       echo "pytest"
@@ -122,14 +129,11 @@ resolve_verify_cmd() {
     fi
   fi
 
-  # n8n-as-code / workflows
   if [ -f n8nac-config.json ] || [ -d workflows ]; then
     if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
-      if node -e 'const p=require("./package.json"); const s=p.scripts||{}; process.exit(s.validate||s["n8nac:validate"]?0:1)' 2>/dev/null; then
-        if node -e 'const p=require("./package.json"); process.exit(p.scripts&&p.scripts.validate?0:1)'; then
-          echo "npm run validate"
-          return
-        fi
+      if node -e 'const p=require("./package.json"); process.exit(p.scripts&&p.scripts.validate?0:1)'; then
+        echo "npm run validate"
+        return
       fi
     fi
   fi
@@ -141,7 +145,7 @@ VERIFY_CMD="$(resolve_verify_cmd)"
 
 if [ -z "$VERIFY_CMD" ]; then
   warn "Nenhum comando de verificação detectado."
-  warn "Defina docs/verification.md e HARNESS_VERIFY_CMD ou .sddharness/config.json → verifyCmd"
+  warn "Defina sddharness/docs/verification.md e HARNESS_VERIFY_CMD ou .sddharness/config.json → verifyCmd"
 else
   ok "Comando de verificação: $VERIFY_CMD"
   # shellcheck disable=SC2086

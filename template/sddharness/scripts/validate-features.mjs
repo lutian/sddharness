@@ -1,12 +1,6 @@
 #!/usr/bin/env node
-// validate-features.mjs — Valida feature_list.json e a presença de specs.
-//
-// Regras:
-//   - Estados válidos: pending, spec_ready, in_progress, done, blocked.
-//   - No máximo uma feature em in_progress.
-//   - name deve casar feature-XX (zero-pad >= 2 dígitos) quando presente.
-//   - Toda feature com sdd:true em estado spec_ready/in_progress/done deve
-//     ter specs/<name>/{requirements,design,tasks}.md.
+// validate-features.mjs — Valida sddharness/feature_list.json e specs.
+// Rode a partir da raiz do projeto: node sddharness/scripts/validate-features.mjs
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -20,6 +14,8 @@ const root = process.argv[2]
   ? join(process.cwd(), process.argv[2])
   : process.cwd();
 
+const HARNESS = "sddharness";
+
 function fail(message) {
   console.log(`[FAIL]  ${message}`);
   process.exitCode = 1;
@@ -27,9 +23,11 @@ function fail(message) {
 
 let data;
 try {
-  data = JSON.parse(readFileSync(join(root, "feature_list.json"), "utf8"));
+  data = JSON.parse(
+    readFileSync(join(root, HARNESS, "feature_list.json"), "utf8")
+  );
 } catch (err) {
-  fail(`feature_list.json inválido: ${err.message}`);
+  fail(`sddharness/feature_list.json inválido: ${err.message}`);
   process.exit(1);
 }
 
@@ -53,11 +51,11 @@ for (const feature of features) {
     process.exit(1);
   }
   if (feature.sdd && REQUIRES_SPEC.has(feature.status)) {
-    const specDir = join(root, "specs", feature.name);
+    const specDir = join(root, HARNESS, "specs", feature.name);
     for (const fname of SPEC_FILES) {
       if (!existsSync(join(specDir, fname))) {
         specErrors.push(
-          `feature ${feature.id} (${feature.name}) em ${feature.status} sem specs/${feature.name}/${fname}`
+          `feature ${feature.id} (${feature.name}) em ${feature.status} sem sddharness/specs/${feature.name}/${fname}`
         );
       }
     }
@@ -69,5 +67,7 @@ if (specErrors.length > 0) {
   process.exit(1);
 }
 
-console.log(`[OK]    feature_list.json válido (${features.length} features)`);
+console.log(
+  `[OK]    sddharness/feature_list.json válido (${features.length} features)`
+);
 console.log("[OK]    Specs presentes para features sdd com estado não-pending");

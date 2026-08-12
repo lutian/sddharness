@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-// docs-ready.mjs — exit 0 se architecture/conventions/verification
+// docs-ready.mjs — exit 0 se sddharness/docs/{architecture,conventions,verification}
 // não contêm o marcador TODO do stub; exit 1 caso contrário.
+// Rode a partir da raiz do projeto: node sddharness/scripts/docs-ready.mjs
 
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const MARKER = "## TODO — preencha após instalar o arnês";
 const FILES = [
-  "docs/architecture.md",
-  "docs/conventions.md",
-  "docs/verification.md",
+  "sddharness/docs/architecture.md",
+  "sddharness/docs/conventions.md",
+  "sddharness/docs/verification.md",
 ];
 
 const root = process.argv[2]
@@ -36,5 +37,5 @@ if (blocked.length > 0) {
   process.exit(1);
 }
 
-console.log("[OK]    docs/architecture.md, conventions.md e verification.md prontos");
+console.log("[OK]    sddharness/docs (architecture, conventions, verification) prontos");
 process.exit(0);

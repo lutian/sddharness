@@ -13,7 +13,7 @@ Defina o comando canônico de verificação do projeto, por exemplo:
 - `npx n8nac ...` / script de validate do repositório
 - outro runner documentado aqui
 
-O `./init.sh` do arnês tenta detectar a stack e rodar o comando certo.
+O `./sddharness/init.sh` do arnês tenta detectar a stack e rodar o comando certo.
 Se a detecção falhar, configure `VERIFY_CMD` em `.sddharness/config.json`
 ou exporte `HARNESS_VERIFY_CMD` no ambiente.
 
@@ -31,19 +31,19 @@ não contra serviços externos reais em CI local do agente.
 ### Nível 3 — Rastreabilidade SDD (obrigatório se `"sdd": true`)
 
 Cada `R<n>` mapeia para pelo menos uma evidência. Documente em
-`progress/impl_<name>.md`.
+`sddharness/progress/impl_<name>.md`.
 
 ## Antipadrões
 
 - ❌ "Deveria funcionar" sem evidência.
-- ❌ Marcar `done` com `./init.sh` vermelho.
+- ❌ Marcar `done` com `./sddharness/init.sh` vermelho.
 - ❌ Inventar um runner diferente do documentado aqui.
 
 ## Verificação final
 
 ```bash
-./init.sh
+./sddharness/init.sh
 ```
 
 Se estiver vermelho, não marque `done`. Anote o bloqueio em
-`progress/current.md`.
+`sddharness/progress/current.md`.

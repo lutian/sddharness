@@ -2,11 +2,11 @@
 /**
  * git-session.mjs — branch mãe + worktree por feature
  *
- *   node scripts/git-session.mjs current-branch
- *   node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
- *   node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
- *   node scripts/git-session.mjs merge-worktree --feature feature-01
- *   node scripts/git-session.mjs show-session
+ *   node sddharness/scripts/git-session.mjs current-branch
+ *   node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+ *   node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+ *   node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
+ *   node sddharness/scripts/git-session.mjs show-session
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

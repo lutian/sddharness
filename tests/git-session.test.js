@@ -16,8 +16,8 @@ import { describe, it, after, before } from "node:test";
 
 const KIT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = join(KIT, "bin", "sddharness");
-const SLUG = join(KIT, "template", "scripts", "git-slug.mjs");
-const SESSION = join(KIT, "template", "scripts", "git-session.mjs");
+const SLUG = join(KIT, "template", "sddharness", "scripts", "git-slug.mjs");
+const SESSION = join(KIT, "template", "sddharness", "scripts", "git-session.mjs");
 
 function git(cwd, args) {
   const r = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -50,10 +50,10 @@ describe("git-session worktree flow", () => {
     writeFileSync(join(repo, "README.md"), "# demo\n");
     git(repo, ["add", "."]);
     git(repo, ["commit", "-m", "init"]);
-    mkdirSync(join(repo, "scripts"), { recursive: true });
+    mkdirSync(join(repo, "sddharness", "scripts"), { recursive: true });
     mkdirSync(join(repo, ".sddharness"), { recursive: true });
-    cpSync(SLUG, join(repo, "scripts", "git-slug.mjs"));
-    cpSync(SESSION, join(repo, "scripts", "git-session.mjs"));
+    cpSync(SLUG, join(repo, "sddharness", "scripts", "git-slug.mjs"));
+    cpSync(SESSION, join(repo, "sddharness", "scripts", "git-session.mjs"));
   });
 
   after(() => {
@@ -64,7 +64,7 @@ describe("git-session worktree flow", () => {
     const r = spawnSync(
       process.execPath,
       [
-        join(repo, "scripts", "git-session.mjs"),
+        join(repo, "sddharness", "scripts", "git-session.mjs"),
         "ensure-parent",
         "--jira",
         "JIRA-123",
@@ -84,7 +84,7 @@ describe("git-session worktree flow", () => {
     let r = spawnSync(
       process.execPath,
       [
-        join(repo, "scripts", "git-session.mjs"),
+        join(repo, "sddharness", "scripts", "git-session.mjs"),
         "add-worktree",
         "--jira",
         "JIRA-123",
@@ -106,7 +106,7 @@ describe("git-session worktree flow", () => {
     r = spawnSync(
       process.execPath,
       [
-        join(repo, "scripts", "git-session.mjs"),
+        join(repo, "sddharness", "scripts", "git-session.mjs"),
         "merge-worktree",
         "--feature",
         "feature-01",
@@ -135,8 +135,11 @@ describe("install copies git scripts and gitignore", () => {
       encoding: "utf8",
     });
     assert.equal(r.status, 0, r.stderr || r.stdout);
-    assert.ok(existsSync(join(dest, "scripts", "git-session.mjs")));
-    assert.ok(existsSync(join(dest, "scripts", "git-slug.mjs")));
+    assert.ok(existsSync(join(dest, "sddharness", "scripts", "git-session.mjs")));
+    assert.ok(existsSync(join(dest, "sddharness", "scripts", "git-slug.mjs")));
+    assert.ok(existsSync(join(dest, "sddharness", "feature_list.json")));
+    assert.ok(!existsSync(join(dest, "feature_list.json")));
+    assert.ok(!existsSync(join(dest, "scripts", "git-session.mjs")));
     const gi = readFileSync(join(dest, ".gitignore"), "utf8");
     assert.match(gi, /\.worktrees\//);
     const cmd = readFileSync(

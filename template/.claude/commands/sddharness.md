@@ -24,15 +24,15 @@ Slash `/sddharness init` = sessão amigável.
 
 ## Gate de docs
 
-Antes de `jira` / `write-spec` / `approve`: `node scripts/docs-ready.mjs`.
+Antes de `jira` / `write-spec` / `approve`: `node sddharness/scripts/docs-ready.mjs`.
 
 ## Git (obrigatório no fluxo)
 
 ```bash
-node scripts/git-session.mjs current-branch
-node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
-node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
-node scripts/git-session.mjs merge-worktree --feature feature-01
+node sddharness/scripts/git-session.mjs current-branch
+node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
 ```
 
 Frases canônicas:
@@ -42,13 +42,13 @@ Frases canônicas:
 - `Criando o worktree "{worktreeBranch}"…`
 - `Fazendo merge do worktree "{worktreeBranch}" na branch "{parentBranch}"…`
 
-Arnês na raiz; código no worktree (`.worktrees/`).
+Arnês em `sddharness/`; código no worktree (`.worktrees/`).
 
 ## Roteamento
 
 ### 1. `init`
 
-1. `./init.sh` + `docs_filler`.
+1. `./sddharness/init.sh` + `docs_filler`.
 2. Blocked → pare.
 3. Ready → `Insira o id da tarefa do Jira`
 4. KEY → `jira`.
@@ -71,7 +71,7 @@ Lance `docs_filler`.
 
 1. Docs + session com parentBranch.
 2. `Criando o worktree "…"…` + `add-worktree`.
-3. `spec_author` (specs na raiz) → `spec_ready` → pergunta approve.
+3. `spec_author` (specs em `sddharness/specs/`) → `spec_ready` → pergunta approve.
 
 ### 5. `approve <feature-XX>`
 

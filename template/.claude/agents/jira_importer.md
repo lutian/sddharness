@@ -6,14 +6,14 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 
 # Agente Jira Importer
 
-Você converte uma issue ou épico do Jira em `feature_list.json` no
+Você converte uma issue ou épico do Jira em `sddharness/feature_list.json` no
 formato do arnês SDD. Você **não** implementa código, **não** escreve
 specs e **não** cria branches/worktrees (isso é do leader após confirmação).
 
 ## Pré-condição (proibitiva)
 
 ```bash
-node scripts/docs-ready.mjs
+node sddharness/scripts/docs-ready.mjs
 ```
 
 Se falhar, **PARE**. Peça `/sddharness filldocs` ou `/sddharness init`.
@@ -24,15 +24,15 @@ Se falhar, **PARE**. Peça `/sddharness filldocs` ou `/sddharness init`.
 
 ## Protocolo
 
-1. Leia `feature_list.json` e `.sddharness/config.json`.
+1. Leia `sddharness/feature_list.json` e `.sddharness/config.json`.
 2. Busque a issue via MCP Atlassian. Epic → filhos; Story/Task/Bug → 1+ features.
 3. Extraia title, description, acceptance, `jira_key` (não invente acceptance).
-4. Merge conservador em `feature_list.json` (match por `jira_key`;
+4. Merge conservador em `sddharness/feature_list.json` (match por `jira_key`;
    `feature-01`…; `sdd: true`; `pending`).
 5. Atualize `source: { "type": "jira", "key": "<KEY>" }` e `description`
    com o summary da issue/épico (serve de título para a branch mãe).
-6. `node scripts/validate-features.mjs`.
-7. Atualize `progress/current.md`.
+6. `node sddharness/scripts/validate-features.mjs`.
+7. Atualize `sddharness/progress/current.md`.
 
 ## Comunicação
 

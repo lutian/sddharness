@@ -10,6 +10,7 @@ const KIT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = join(KIT, "bin", "sddharness");
 const SCHEMA = join(KIT, "schema", "feature_list.schema.json");
 const MARKER = "## TODO — preencha após instalar o arnês";
+const H = "sddharness";
 
 describe("sddharness schema", () => {
   it("schema file exists and is valid JSON", () => {
@@ -40,18 +41,22 @@ describe("sddharness CLI init (install skeleton)", () => {
       encoding: "utf8",
     });
     assert.equal(r.status, 0, r.stderr || r.stdout);
-    assert.ok(existsSync(join(dest, "AGENTS.md")));
+    assert.ok(existsSync(join(dest, "CLAUDE.md")));
+    assert.ok(existsSync(join(dest, H, "AGENTS.md")));
+    assert.ok(existsSync(join(dest, H, "feature_list.json")));
+    assert.ok(existsSync(join(dest, H, "scripts", "git-session.mjs")));
+    assert.ok(existsSync(join(dest, H, "init.sh")));
     assert.ok(existsSync(join(dest, ".sddharness", "config.json")));
     assert.ok(existsSync(join(dest, ".cursor", "commands", "sddharness.md")));
     assert.ok(existsSync(join(dest, ".claude", "agents", "docs_filler.md")));
     assert.ok(existsSync(join(dest, ".cursor", "agents", "docs_filler.md")));
-    assert.ok(existsSync(join(dest, "scripts", "docs-ready.mjs")));
-    assert.ok(existsSync(join(dest, "scripts", "validate-features.mjs")));
+    assert.ok(!existsSync(join(dest, "feature_list.json")));
+    assert.ok(!existsSync(join(dest, "AGENTS.md")));
   });
 
   it("docs still have TODO marker after install", () => {
     for (const f of ["architecture.md", "conventions.md", "verification.md"]) {
-      const text = readFileSync(join(dest, "docs", f), "utf8");
+      const text = readFileSync(join(dest, H, "docs", f), "utf8");
       assert.ok(text.includes(MARKER), f);
     }
   });
@@ -59,7 +64,7 @@ describe("sddharness CLI init (install skeleton)", () => {
   it("docs-ready.mjs exits 1 on stubs", () => {
     const r = spawnSync(
       process.execPath,
-      [join(dest, "scripts", "docs-ready.mjs")],
+      [join(dest, H, "scripts", "docs-ready.mjs")],
       { cwd: dest, encoding: "utf8" }
     );
     assert.notEqual(r.status, 0);
@@ -83,14 +88,14 @@ describe("sddharness CLI init (install skeleton)", () => {
     assert.ok(cfg.agents.docs_filler);
   });
 
-  it("does not overwrite existing AGENTS.md on second init", () => {
+  it("does not overwrite existing sddharness/AGENTS.md on second init", () => {
     const marker = "# CUSTOM AGENTS\n";
-    writeFileSync(join(dest, "AGENTS.md"), marker);
+    writeFileSync(join(dest, H, "AGENTS.md"), marker);
     const r = spawnSync(process.execPath, [CLI, "init", dest], {
       encoding: "utf8",
     });
     assert.equal(r.status, 0, r.stderr || r.stdout);
-    assert.equal(readFileSync(join(dest, "AGENTS.md"), "utf8"), marker);
+    assert.equal(readFileSync(join(dest, H, "AGENTS.md"), "utf8"), marker);
   });
 
   it("validate passes on empty feature list", () => {
@@ -105,18 +110,21 @@ describe("docs-ready.mjs", () => {
   it("exits 0 when TODO markers removed", () => {
     const dir = mkdtempSync(join(tmpdir(), "docs-ready-"));
     try {
-      mkdirSync(join(dir, "docs"), { recursive: true });
-      mkdirSync(join(dir, "scripts"), { recursive: true });
+      mkdirSync(join(dir, H, "docs"), { recursive: true });
+      mkdirSync(join(dir, H, "scripts"), { recursive: true });
       cpSync(
-        join(KIT, "template", "scripts", "docs-ready.mjs"),
-        join(dir, "scripts", "docs-ready.mjs")
+        join(KIT, "template", H, "scripts", "docs-ready.mjs"),
+        join(dir, H, "scripts", "docs-ready.mjs")
       );
       for (const f of ["architecture.md", "conventions.md", "verification.md"]) {
-        writeFileSync(join(dir, "docs", f), `# ${f}\n\nConteúdo real sem stub.\n`);
+        writeFileSync(
+          join(dir, H, "docs", f),
+          `# ${f}\n\nConteúdo real sem stub.\n`
+        );
       }
       const r = spawnSync(
         process.execPath,
-        [join(dir, "scripts", "docs-ready.mjs")],
+        [join(dir, H, "scripts", "docs-ready.mjs")],
         { cwd: dir, encoding: "utf8" }
       );
       assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -130,15 +138,15 @@ describe("validate-features name rule", () => {
   it("rejects feature-1 (no zero-pad)", () => {
     const dir = mkdtempSync(join(tmpdir(), "harness-bad-"));
     try {
-      mkdirSync(join(dir, "scripts"), { recursive: true });
-      mkdirSync(join(dir, "specs"), { recursive: true });
+      mkdirSync(join(dir, H, "scripts"), { recursive: true });
+      mkdirSync(join(dir, H, "specs"), { recursive: true });
       const validator = readFileSync(
-        join(KIT, "template", "scripts", "validate-features.mjs"),
+        join(KIT, "template", H, "scripts", "validate-features.mjs"),
         "utf8"
       );
-      writeFileSync(join(dir, "scripts", "validate-features.mjs"), validator);
+      writeFileSync(join(dir, H, "scripts", "validate-features.mjs"), validator);
       writeFileSync(
-        join(dir, "feature_list.json"),
+        join(dir, H, "feature_list.json"),
         JSON.stringify({
           project: "t",
           rules: { valid_status: ["pending"] },
@@ -157,7 +165,7 @@ describe("validate-features name rule", () => {
       );
       const r = spawnSync(
         process.execPath,
-        [join(dir, "scripts", "validate-features.mjs")],
+        [join(dir, H, "scripts", "validate-features.mjs")],
         { cwd: dir, encoding: "utf8" }
       );
       assert.notEqual(r.status, 0);

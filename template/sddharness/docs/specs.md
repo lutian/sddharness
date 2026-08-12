@@ -6,7 +6,7 @@
 
 ## Estrutura
 
-Cada feature nova (`"sdd": true` em `feature_list.json`) tem uma pasta
+Cada feature nova (`"sdd": true` em `sddharness/feature_list.json`) tem uma pasta
 dedicada assim que sai de `pending`:
 
 ```
@@ -16,7 +16,7 @@ specs/<feature-name>/
 └── tasks.md          # PASSOS concretos a implementar
 ```
 
-O `feature-name` coincide com o campo `name` de `feature_list.json`
+O `feature-name` coincide com o campo `name` de `sddharness/feature_list.json`
 (ex.: `feature-01`).
 
 ## Estados de uma feature
@@ -27,12 +27,12 @@ O `feature-name` coincide com o campo `name` de `feature_list.json`
 | `spec_ready`   | Spec redigido. Aguardando aprovação humana. NÃO se toca código.  |
 | `in_progress`  | Spec aprovado. `implementer` trabalhando.                        |
 | `done`         | Verificação verde, `reviewer` aprovou, sessão fechada.           |
-| `blocked`      | Travado. Motivo em `progress/current.md`.                        |
+| `blocked`      | Travado. Motivo em `sddharness/progress/current.md`.                        |
 
 ## O portão de aprovação humana
 
 Quando o `spec_author` termina, marca `spec_ready` e para. O humano lê
-`specs/<feature>/` e roda:
+`sddharness/specs/<feature>/` e roda:
 
 ```
 /sddharness approve <feature-XX>
@@ -58,15 +58,15 @@ pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [imp
 Regras rígidas:
 
 - Cada requirement tem id estável: `R1`, `R2`, ...
-- Cada requirement DEVE ser verificável conforme `docs/verification.md`.
+- Cada requirement DEVE ser verificável conforme `sddharness/docs/verification.md`.
 - Um `DEVE` por requirement.
 - Sem verbos brandos ("poderia", "pode", "suporta").
 
 ## design.md — decisões técnicas
 
 Capture antes de tocar em código: arquivos, assinaturas, exceções,
-alternativa descartada. Apoie-se em `docs/architecture.md` e
-`docs/conventions.md`.
+alternativa descartada. Apoie-se em `sddharness/docs/architecture.md` e
+`sddharness/docs/conventions.md`.
 
 ## tasks.md — checklist executável
 
@@ -76,7 +76,7 @@ marca `[x]`; o reviewer rejeita `[ ]` sem justificativa.
 ## Rastreabilidade
 
 Cada `R<n>` precisa de evidência de verificação. O mapa fica em
-`progress/impl_<name>.md`.
+`sddharness/progress/impl_<name>.md`.
 
 ## Quando o SDD NÃO se aplica
 

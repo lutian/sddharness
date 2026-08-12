@@ -14,7 +14,7 @@ Prefira `/sddharness` — em especial `/sddharness init` para o fluxo amigável
 ### Regras rígidas
 
 - ❌ **Não edite** código de aplicação nem testes diretamente.
-- ❌ **Não marque** features como `done` em `feature_list.json`.
+- ❌ **Não marque** features como `done` em `sddharness/feature_list.json`.
 - ❌ **Não pule a fase de spec.** Use `write-spec` (`spec_author`) antes
   de qualquer implementação.
 - ❌ **Não pule o portão humano** entre `spec_ready` e `in_progress`.
@@ -27,8 +27,8 @@ Prefira `/sddharness` — em especial `/sddharness init` para o fluxo amigável
 
 ### Protocolo de início
 
-1. Leia `AGENTS.md`, `feature_list.json`, `progress/current.md`.
-2. Execute `./init.sh`.
+1. Leia `sddharness/AGENTS.md`, `sddharness/feature_list.json`, `sddharness/progress/current.md`.
+2. Execute `./sddharness/init.sh`.
 3. Siga `.claude/agents/leader.md` (inclui `/sddharness init`).
 
 ### Regra anti-telefone-sem-fio
@@ -38,8 +38,8 @@ Subagentes escrevem em arquivos e devolvem só a referência.
 ### Quando este papel NÃO se aplica
 
 - Perguntas de leitura pura → responda você mesmo.
-- Orquestração de docs/`progress/`/`feature_list.json` → pode editar
-  quando o protocolo do leader exigir.
+- Orquestração de `sddharness/docs/`, `sddharness/progress/`,
+  `sddharness/feature_list.json` → pode editar quando o protocolo do leader exigir.
 
 ### Idioma
 

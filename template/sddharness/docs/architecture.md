@@ -14,7 +14,7 @@
 
 ## Princípios genéricos (mantenha ou adapte)
 
-1. Mudanças pequenas e rastreáveis a uma feature de `feature_list.json`.
+1. Mudanças pequenas e rastreáveis a uma feature de `sddharness/feature_list.json`.
 2. Contratos públicos estáveis; detalhes internos encapsulados.
 3. Sem IO oculto em camadas que deveriam ser puras (se aplicável).
 4. Toda dependência nova precisa de justificativa no `design.md` da feature.

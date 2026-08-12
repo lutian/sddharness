@@ -7,28 +7,30 @@
 
 ## 1. Antes de começar (obrigatório)
 
-1. Execute `./init.sh`. Se falhar, **pare**.
-2. Docs prontos: `node scripts/docs-ready.mjs` (senão `/sddharness filldocs` ou `init`).
-3. Leia `progress/current.md`, `feature_list.json`, `docs/specs.md`.
+1. Execute `./sddharness/init.sh`. Se falhar, **pare**.
+2. Docs prontos: `node sddharness/scripts/docs-ready.mjs` (senão `/sddharness filldocs` ou `init`).
+3. Leia `sddharness/progress/current.md`, `sddharness/feature_list.json`, `sddharness/docs/specs.md`.
 4. Leia `.sddharness/config.json` (e `session.json` se existir).
 
 ## 2. Mapa do repositório
 
 | Arquivo / pasta | O que contém |
 |---|---|
-| `feature_list.json` / `specs/` / `progress/` | Estado SDD (raiz) |
-| `docs/*` | Arquitetura, convenções, verificação, specs SDD |
+| `sddharness/feature_list.json` | Lista de features e estados |
+| `sddharness/specs/` | Specs SDD por feature |
+| `sddharness/progress/` | Progresso da sessão |
+| `sddharness/docs/*` | Arquitetura, convenções, verificação, specs SDD |
+| `sddharness/scripts/` | validate-features, docs-ready, git-session |
 | `.sddharness/config.json` | Modelos + verifyCmd |
 | `.sddharness/session.json` | Branch mãe + worktrees da sessão Jira |
 | `.worktrees/` | Worktrees por feature (gitignored) |
-| `scripts/git-session.mjs` | ensure-parent / add-worktree / merge-worktree |
 | `.claude/agents/` / `.cursor/agents/` | Subagentes |
 
 ## 3. Regras rígidas
 
 - Uma feature por vez.
 - Docs prontos antes de jira / write-spec / approve.
-- Código da feature no **worktree**; arnês na **raiz**.
+- Código da feature no **worktree**; artefatos SDD em **sddharness/**.
 - `write-spec` → approve humano → `approve` → merge worktree na branch mãe.
 - Sem subcomando `execute`.
 
@@ -44,8 +46,8 @@ criando worktree, fazendo merge).
 
 ## 5. Encerramento
 
-`./init.sh` verde; `done` após APPROVED + merge; limpe `progress/current.md`.
+`./sddharness/init.sh` verde; `done` após APPROVED + merge; limpe `sddharness/progress/current.md`.
 
 ## 6. Se travar
 
-Documente em `progress/current.md` e pare — sem workaround inventado.
+Documente em `sddharness/progress/current.md` e pare — sem workaround inventado.

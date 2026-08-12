@@ -13,7 +13,7 @@ do subagente: `Modelo preferido: <slug>`.
 Antes de `jira`, `write-spec` ou `approve`, rode:
 
 ```bash
-node scripts/docs-ready.mjs
+node sddharness/scripts/docs-ready.mjs
 ```
 
 Se exit ≠ 0, **PARE**. Peça `/sddharness filldocs` ou `/sddharness init`.
@@ -23,16 +23,16 @@ Se exit ≠ 0, **PARE**. Peça `/sddharness filldocs` ou `/sddharness init`.
 Use **somente** os scripts (não invente git ad-hoc):
 
 ```bash
-node scripts/git-session.mjs current-branch
-node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
-node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
-node scripts/git-session.mjs merge-worktree --feature feature-01
-node scripts/git-session.mjs show-session
+node sddharness/scripts/git-session.mjs current-branch
+node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
+node sddharness/scripts/git-session.mjs show-session
 ```
 
 Estado em `.sddharness/session.json`. Worktrees em `.worktrees/`.
 
-Estado do arnês (`feature_list.json`, `specs/`, `progress/`) fica na **raiz**.
+Estado do arnês (`sddharness/feature_list.json`, `sddharness/specs/`, `sddharness/progress/`) fica em **sddharness/**.
 Código da feature é editado no **worktree** (`worktreePath`).
 
 ### Frases canônicas (obrigatórias)
@@ -44,8 +44,8 @@ Código da feature é editado no **worktree** (`worktreePath`).
 
 ## Protocolo de início
 
-1. Leia `AGENTS.md`, `feature_list.json`, `progress/current.md`.
-2. Execute `./init.sh`. Se falhar o ambiente, pare e reporte.
+1. Leia `sddharness/AGENTS.md`, `sddharness/feature_list.json`, `sddharness/progress/current.md`.
+2. Execute `./sddharness/init.sh`. Se falhar o ambiente, pare e reporte.
 
 ## Fluxo SDD
 
@@ -57,7 +57,7 @@ pending → [spec_author] → spec_ready → ⏸ HUMANO → in_progress → [imp
 
 ### `init` (orquestrador amigável)
 
-1. `./init.sh` + `docs_filler`.
+1. `./sddharness/init.sh` + `docs_filler`.
 2. Se `docs_blocked` → PARE.
 3. Se ready → `Insira o id da tarefa do Jira`
 4. KEY → fluxo `jira`.
@@ -79,7 +79,7 @@ Lance `docs_filler`.
 1. Docs prontos + `session.json` com `parentBranch` (senão rode o passo da
    branch mãe antes).
 2. Diga `Criando o worktree "…"…` e rode `add-worktree` com título da feature.
-3. Lance `spec_author` (specs na **raiz**).
+3. Lance `spec_author` (specs em **sddharness/specs/**).
 4. Em `spec_ready`, pergunte: `Aprova a <name> de "{title}"?`
 
 ### `approve <feature-XX>`

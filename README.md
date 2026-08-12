@@ -6,7 +6,7 @@ repositório, orquestre features com agentes e use o mesmo comando no
 
 Pilares:
 
-1. **O repositório é o sistema** — `feature_list.json`, `specs/`, `progress/`.
+1. **O repositório é o sistema** — estado SDD em `sddharness/` (`feature_list.json`, `specs/`, `progress/`).
 2. **Multi-agente** — leader coordena; resultados em disco.
 3. **Portão humano** — nada de código antes de `/sddharness approve`.
 4. **Docs de stack** — architecture / conventions / verification prontos.
@@ -21,6 +21,35 @@ Pilares:
 ```
 
 Slash `/sddharness init` no projeto alvo = sessão amigável (não é a CLI).
+
+### Estrutura instalada
+
+```
+projeto/
+├── CLAUDE.md
+├── .claude/                  # agents + commands
+├── .cursor/                  # agents + commands
+├── .sddharness/
+│   ├── config.json
+│   └── session.json          # gitignored
+├── .worktrees/               # worktrees git (gitignored)
+└── sddharness/
+    ├── AGENTS.md
+    ├── CHECKPOINTS.md
+    ├── feature_list.json
+    ├── init.sh
+    ├── docs/
+    ├── progress/
+    ├── scripts/
+    └── specs/
+```
+
+### Projetos já instalados (layout antigo)
+
+Se o arnês estava solto na raiz (`feature_list.json`, `docs/`, `scripts/`, …),
+mova esses arquivos para `sddharness/` ou remova-os e rode de novo
+`./install.sh /caminho` (merge conservador cria `sddharness/` sem apagar
+código do app).
 
 ## Fluxo recomendado
 
@@ -51,13 +80,13 @@ Não existe `execute` — use **`write-spec`**.
 
 ### Git / worktrees
 
-Scripts:
+Scripts (cwd = raiz do projeto):
 
 ```bash
-node scripts/git-session.mjs current-branch
-node scripts/git-session.mjs ensure-parent --jira KEY --title "..."
-node scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
-node scripts/git-session.mjs merge-worktree --feature feature-01
+node sddharness/scripts/git-session.mjs current-branch
+node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
 ```
 
 | Artefato | Exemplo |
@@ -66,12 +95,13 @@ node scripts/git-session.mjs merge-worktree --feature feature-01
 | Worktree/branch | `feature/JIRA-123-01-implementando-adapters` |
 | Path | `.worktrees/JIRA-123-01-implementando-adapters` |
 
-Arnês (`specs/`, `feature_list`, `progress`) na **raiz**. Código da feature no **worktree**. Sessão em `.sddharness/session.json` (gitignored).
+Estado SDD em **`sddharness/`**. Código da feature no **worktree**. Sessão em
+`.sddharness/session.json` (gitignored).
 
 ### Gate de docs
 
 ```bash
-node scripts/docs-ready.mjs
+node sddharness/scripts/docs-ready.mjs
 ```
 
 ## Agentes
@@ -80,7 +110,7 @@ node scripts/docs-ready.mjs
 |--------|--------|
 | `leader` | Orquestra; git + perguntas amáveis |
 | `docs_filler` | Preenche docs de stack |
-| `jira_importer` | Jira → `feature_list.json` |
+| `jira_importer` | Jira → `sddharness/feature_list.json` |
 | `spec_author` | Specs (`write-spec`) |
 | `implementer` | Código no worktree |
 | `reviewer` | Review |
@@ -92,9 +122,16 @@ Ver `schema/feature_list.schema.json`. Modelos em `.sddharness/config.json`
 
 ## Validação / testes do kit
 
+No projeto alvo:
+
 ```bash
-./init.sh
-node scripts/docs-ready.mjs
+./sddharness/init.sh
+node sddharness/scripts/docs-ready.mjs
+```
+
+No repositório do kit:
+
+```bash
 npm test
 ```
 
