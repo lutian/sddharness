@@ -141,3 +141,9 @@ npm test
 ## Cursor vs Claude Code
 
 Mesmo slash `/sddharness` em `.cursor/commands` e `.claude/commands`.
+
+
+
+### A ideia do projeto está baseada no seguinte repo de Betta-Tech:
+
+[github.com/betta-tech/harness-sdd/](https://github.com/betta-tech/harness-sdd/tree/uncle-bob-harness)
