@@ -60,7 +60,7 @@ if command -v node >/dev/null 2>&1 && [ -f "$H/scripts/docs-ready.mjs" ]; then
   if node "$H/scripts/docs-ready.mjs"; then
     :
   else
-    warn "Docs ainda são stub (TODO). Rode /sddharness filldocs ou /sddharness init antes de jira/write-spec/approve"
+    warn "Docs ainda são stub (TODO). Rode /sddharness filldocs ou /sddharness init antes de jira/task/write-spec/approve"
   fi
 else
   warn "sddharness/scripts/docs-ready.mjs ausente — não foi possível checar docs"

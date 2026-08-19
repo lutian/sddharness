@@ -3,8 +3,8 @@
  * git-session.mjs — branch mãe + worktree por feature
  *
  *   node sddharness/scripts/git-session.mjs current-branch
- *   node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
- *   node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+ *   node sddharness/scripts/git-session.mjs ensure-parent --jira KEY|--key KEY --title "..."
+ *   node sddharness/scripts/git-session.mjs add-worktree --jira KEY|--key KEY --feature feature-01 --title "..."
  *   node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
  *   node sddharness/scripts/git-session.mjs show-session
  */
@@ -92,10 +92,18 @@ function cmdCurrentBranch() {
   console.log(name);
 }
 
+function sessionKey(args) {
+  const key = args.key || args.jira;
+  if (!key || key === true) return null;
+  return String(key);
+}
+
 function cmdEnsureParent(args) {
-  const jira = args.jira;
+  const jira = sessionKey(args);
   const title = args.title;
-  if (!jira || !title) fail("usage: ensure-parent --jira KEY --title \"...\"");
+  if (!jira || !title || title === true) {
+    fail('usage: ensure-parent --jira KEY|--key KEY --title "..."');
+  }
 
   const base = git(["branch", "--show-current"]);
   if (!base) fail("HEAD detached — faça checkout de uma branch base");
@@ -123,11 +131,13 @@ function cmdEnsureParent(args) {
 }
 
 function cmdAddWorktree(args) {
-  const jira = args.jira;
+  const jira = sessionKey(args);
   const feature = args.feature;
   const title = args.title;
-  if (!jira || !feature || !title) {
-    fail('usage: add-worktree --jira KEY --feature feature-01 --title "..."');
+  if (!jira || !feature || !title || feature === true || title === true) {
+    fail(
+      'usage: add-worktree --jira KEY|--key KEY --feature feature-01 --title "..."'
+    );
   }
 
   const session = readSession();
@@ -221,8 +231,8 @@ function cmdShowSession() {
 function usage() {
   console.log(`Usage:
   git-session.mjs current-branch
-  git-session.mjs ensure-parent --jira KEY --title "..."
-  git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+  git-session.mjs ensure-parent --jira KEY|--key KEY --title "..."
+  git-session.mjs add-worktree --jira KEY|--key KEY --feature feature-01 --title "..."
   git-session.mjs merge-worktree --feature feature-01
   git-session.mjs show-session`);
 }

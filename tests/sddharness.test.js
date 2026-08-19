@@ -78,6 +78,7 @@ describe("sddharness CLI init (install skeleton)", () => {
     assert.match(cmd, /filldocs/);
     assert.match(cmd, /\/sddharness init/);
     assert.match(cmd, /write-spec/);
+    assert.match(cmd, /\/sddharness task/);
     assert.doesNotMatch(cmd, /\/sddharness execute/);
   });
 

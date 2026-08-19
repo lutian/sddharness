@@ -34,7 +34,7 @@ Docs estão **prontos** quando nenhum dos três arquivos tem esse marcador.
    - NÃO altere os três markdown.
    - Anote em `sddharness/progress/current.md` que docs estão bloqueados.
    - Informe o humano de forma **proibitiva**: o arnês **não pode**
-     continuar com `jira` / `write-spec` / `approve` até os docs serem
+     continuar com `jira` / `task` / `write-spec` / `approve` até os docs serem
      preenchidos (manual ou após haver código).
    - Se os docs já estão prontos (sem TODO) e não há codebase para
      re-inferir, **não sobrescreva** — reporte que docs já estão prontos.

@@ -137,6 +137,7 @@ describe("install copies git scripts and gitignore", () => {
     assert.equal(r.status, 0, r.stderr || r.stdout);
     assert.ok(existsSync(join(dest, "sddharness", "scripts", "git-session.mjs")));
     assert.ok(existsSync(join(dest, "sddharness", "scripts", "git-slug.mjs")));
+    assert.ok(existsSync(join(dest, "sddharness", "scripts", "import-task.mjs")));
     assert.ok(existsSync(join(dest, "sddharness", "feature_list.json")));
     assert.ok(!existsSync(join(dest, "feature_list.json")));
     assert.ok(!existsSync(join(dest, "scripts", "git-session.mjs")));
@@ -150,5 +151,48 @@ describe("install copies git scripts and gitignore", () => {
     assert.match(cmd, /Criando o worktree/);
     assert.match(cmd, /Fazendo merge do worktree/);
     assert.match(cmd, /branch atual/);
+    assert.match(cmd, /\/sddharness task/);
+  });
+});
+
+describe("git-session --key alias", () => {
+  let repo;
+
+  before(() => {
+    repo = mkdtempSync(join(tmpdir(), "sdd-key-"));
+    git(repo, ["init"]);
+    git(repo, ["config", "user.email", "test@example.com"]);
+    git(repo, ["config", "user.name", "Test"]);
+    git(repo, ["checkout", "-b", "main"]);
+    writeFileSync(join(repo, "README.md"), "# demo\n");
+    git(repo, ["add", "."]);
+    git(repo, ["commit", "-m", "init"]);
+    mkdirSync(join(repo, "sddharness", "scripts"), { recursive: true });
+    mkdirSync(join(repo, ".sddharness"), { recursive: true });
+    cpSync(SLUG, join(repo, "sddharness", "scripts", "git-slug.mjs"));
+    cpSync(SESSION, join(repo, "sddharness", "scripts", "git-session.mjs"));
+  });
+
+  after(() => {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("ensure-parent --key 1 creates feature/1-...", () => {
+    const r = spawnSync(
+      process.execPath,
+      [
+        join(repo, "sddharness", "scripts", "git-session.mjs"),
+        "ensure-parent",
+        "--key",
+        "1",
+        "--title",
+        "Atualização Serviço Payment",
+      ],
+      { cwd: repo, encoding: "utf8" }
+    );
+    assert.equal(r.status, 0, r.stderr + r.stdout);
+    assert.match(r.stdout, /feature\/1-atualizacao-servico-payment/);
+    const branch = git(repo, ["branch", "--show-current"]);
+    assert.equal(branch, "feature/1-atualizacao-servico-payment");
   });
 });

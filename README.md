@@ -44,13 +44,6 @@ projeto/
     └── specs/
 ```
 
-### Projetos já instalados (layout antigo)
-
-Se o arnês estava solto na raiz (`feature_list.json`, `docs/`, `scripts/`, …),
-mova esses arquivos para `sddharness/` ou remova-os e rode de novo
-`./install.sh /caminho` (merge conservador cria `sddharness/` sem apagar
-código do app).
-
 ## Fluxo recomendado
 
 ```
@@ -58,11 +51,11 @@ código do app).
 ```
 
 1. `filldocs` — preenche os 3 docs a partir do codebase (ou bloqueia se vazio).
-2. Pede o id da tarefa Jira → importa features.
+2. Pede o id Jira **ou** a descrição da tarefa (sem Jira) → importa features.
 3. Pergunta: `Vou criar a branch para começar a trabalhar a partir da branch atual ({nome}), posso continuar ou quer mudar de branch?`
-4. Se continuar: `Criando a branch "feature/JIRA-123-…"…` (a partir da branch atual).
+4. Se continuar: `Criando a branch "feature/JIRA-123-…"…` ou `feature/1-…` (task manual).
 5. `Quer que inicie o fluxo com a feature-01?`
-6. Sim → `Criando o worktree "feature/JIRA-123-01-…"…` + `write-spec`.
+6. Sim → `Criando o worktree "feature/JIRA-123-01-…"…` (ou `feature/1-01-…`) + `write-spec`.
 7. `Aprova a feature-01 de "{título}"?`
 8. Sim → implementa no worktree → `Fazendo merge do worktree "…" na branch "…"…` → próxima feature.
 
@@ -71,10 +64,14 @@ código do app).
 ```
 /sddharness filldocs
 /sddharness jira PROJ-123
+/sddharness task Cole aqui a descrição da tarefa
 /sddharness write-spec feature-01
 /sddharness approve feature-01
 /sddharness config implementer model <slug>
 ```
+
+`task` é o caminho sem Jira: o id vem de `sddharness/progress/history.md`
+(1 se ainda não houver tarefa manual; senão N+1).
 
 Não existe `execute` — use **`write-spec`**.
 
@@ -85,15 +82,20 @@ Scripts (cwd = raiz do projeto):
 ```bash
 node sddharness/scripts/git-session.mjs current-branch
 node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node sddharness/scripts/git-session.mjs ensure-parent --key KEY --title "..."
 node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node sddharness/scripts/git-session.mjs add-worktree --key KEY --feature feature-01 --title "..."
 node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
+node sddharness/scripts/import-task.mjs import --description "..."
 ```
 
-| Artefato | Exemplo |
-|----------|---------|
-| Branch mãe | `feature/JIRA-123-atualizacao-servico-payment` |
-| Worktree/branch | `feature/JIRA-123-01-implementando-adapters` |
-| Path | `.worktrees/JIRA-123-01-implementando-adapters` |
+`--key` é sinônimo de `--jira` (id Jira ou id numérico da task).
+
+| Artefato | Exemplo Jira | Exemplo task |
+|----------|--------------|--------------|
+| Branch mãe | `feature/JIRA-123-atualizacao-servico-payment` | `feature/1-atualizacao-servico-payment` |
+| Worktree/branch | `feature/JIRA-123-01-implementando-adapters` | `feature/1-01-implementando-adapters` |
+| Path | `.worktrees/JIRA-123-01-implementando-adapters` | `.worktrees/1-01-implementando-adapters` |
 
 Estado SDD em **`sddharness/`**. Código da feature no **worktree**. Sessão em
 `.sddharness/session.json` (gitignored).
@@ -111,6 +113,7 @@ node sddharness/scripts/docs-ready.mjs
 | `leader` | Orquestra; git + perguntas amáveis |
 | `docs_filler` | Preenche docs de stack |
 | `jira_importer` | Jira → `sddharness/feature_list.json` |
+| — | `import-task.mjs` → task manual (`source.type: "manual"`) |
 | `spec_author` | Specs (`write-spec`) |
 | `implementer` | Código no worktree |
 | `reviewer` | Review |

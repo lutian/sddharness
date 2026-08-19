@@ -1,5 +1,5 @@
 ---
-description: Arnês SDD — init | filldocs | jira | write-spec | approve | config
+description: Arnês SDD — init | filldocs | jira | task | write-spec | approve | config
 ---
 
 # /sddharness
@@ -12,6 +12,7 @@ Comando unificado do mini-arnês Spec Driven Development.
 /sddharness init
 /sddharness filldocs
 /sddharness jira <KEY>
+/sddharness task <descrição da tarefa>
 /sddharness write-spec <feature-XX>
 /sddharness approve <feature-XX>
 /sddharness config <agente> model <modelo>
@@ -24,16 +25,20 @@ Slash `/sddharness init` = sessão amigável.
 
 ## Gate de docs
 
-Antes de `jira` / `write-spec` / `approve`: `node sddharness/scripts/docs-ready.mjs`.
+Antes de `jira` / `task` / `write-spec` / `approve`: `node sddharness/scripts/docs-ready.mjs`.
 
 ## Git (obrigatório no fluxo)
 
 ```bash
 node sddharness/scripts/git-session.mjs current-branch
 node sddharness/scripts/git-session.mjs ensure-parent --jira KEY --title "..."
+node sddharness/scripts/git-session.mjs ensure-parent --key KEY --title "..."
 node sddharness/scripts/git-session.mjs add-worktree --jira KEY --feature feature-01 --title "..."
+node sddharness/scripts/git-session.mjs add-worktree --key KEY --feature feature-01 --title "..."
 node sddharness/scripts/git-session.mjs merge-worktree --feature feature-01
 ```
+
+`--key` é sinônimo de `--jira` (chave da sessão: id Jira ou id numérico da task).
 
 Frases canônicas:
 
@@ -50,8 +55,8 @@ Arnês em `sddharness/`; código no worktree (`.worktrees/`).
 
 1. `./sddharness/init.sh` + `docs_filler`.
 2. Blocked → pare.
-3. Ready → `Insira o id da tarefa do Jira`
-4. KEY → `jira`.
+3. Ready → `Insira o id da tarefa do Jira, ou cole a descrição da tarefa`
+4. Texto no formato `PROJ-123` → `jira`. Qualquer outro texto → `task`.
 5. `current-branch` → pergunta da base atual.
 6. Continuar → `Criando a branch "…"…` + `ensure-parent`.
 7. `Quer que inicie o fluxo com a feature-01?`
@@ -67,19 +72,28 @@ Lance `docs_filler`.
 2. Leader (não o importer) conduz pergunta da base + `ensure-parent`.
 3. Depois: `Quer que inicie o fluxo com a feature-01?`
 
-### 4. `write-spec <feature-XX>`
+### 4. `task <descrição>`
+
+Para quem não usa Jira. Cole o texto da tarefa.
+
+1. Docs prontos → `node sddharness/scripts/import-task.mjs import --description "..."`.
+2. O script aloca o próximo id em `sddharness/progress/history.md` (1 se vazio; senão N+1) e grava `source.type: "manual"`.
+3. Leader conduz pergunta da base + `ensure-parent --key <id>`.
+4. Depois: `Quer que inicie o fluxo com a feature-01?`
+
+### 5. `write-spec <feature-XX>`
 
 1. Docs + session com parentBranch.
 2. `Criando o worktree "…"…` + `add-worktree`.
 3. `spec_author` (specs em `sddharness/specs/`) → `spec_ready` → pergunta approve.
 
-### 5. `approve <feature-XX>`
+### 6. `approve <feature-XX>`
 
 1. `implementer` (código no worktreePath) → `reviewer` → `done`.
 2. `Fazendo merge do worktree "…" na branch "{parent}"…` + `merge-worktree`.
 3. Próxima feature.
 
-### 6. `config <agente> model <modelo>`
+### 7. `config <agente> model <modelo>`
 
 Agentes: `leader`, `spec_author`, `implementer`, `reviewer`, `jira_importer`, `docs_filler`.
 

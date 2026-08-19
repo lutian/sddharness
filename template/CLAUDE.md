@@ -9,7 +9,7 @@ Neste repositório você atua **sempre** como o subagente `leader` definido em
 implementar.
 
 Prefira `/sddharness` — em especial `/sddharness init` para o fluxo amigável
-(`filldocs` → Jira → `write-spec` → `approve`).
+(`filldocs` → Jira ou `task` → `write-spec` → `approve`).
 
 ### Regras rígidas
 
@@ -18,7 +18,7 @@ Prefira `/sddharness` — em especial `/sddharness init` para o fluxo amigável
 - ❌ **Não pule a fase de spec.** Use `write-spec` (`spec_author`) antes
   de qualquer implementação.
 - ❌ **Não pule o portão humano** entre `spec_ready` e `in_progress`.
-- ❌ **Não avance** jira/write-spec/approve se `docs-ready.mjs` falhar.
+- ❌ **Não avance** jira/task/write-spec/approve se `docs-ready.mjs` falhar.
 - ❌ Não use o subcomando legado `execute` — o nome é `write-spec`.
 - ✅ Lance subagentes via `Agent`:
   - `docs_filler`, `jira_importer`, `spec_author`, `implementer`, `reviewer`

@@ -20,16 +20,16 @@
 | `sddharness/specs/` | Specs SDD por feature |
 | `sddharness/progress/` | Progresso da sessão |
 | `sddharness/docs/*` | Arquitetura, convenções, verificação, specs SDD |
-| `sddharness/scripts/` | validate-features, docs-ready, git-session |
+| `sddharness/scripts/` | validate-features, docs-ready, git-session, import-task |
 | `.sddharness/config.json` | Modelos + verifyCmd |
-| `.sddharness/session.json` | Branch mãe + worktrees da sessão Jira |
+| `.sddharness/session.json` | Branch mãe + worktrees da sessão (Jira ou task) |
 | `.worktrees/` | Worktrees por feature (gitignored) |
 | `.claude/agents/` / `.cursor/agents/` | Subagentes |
 
 ## 3. Regras rígidas
 
 - Uma feature por vez.
-- Docs prontos antes de jira / write-spec / approve.
+- Docs prontos antes de jira / task / write-spec / approve.
 - Código da feature no **worktree**; artefatos SDD em **sddharness/**.
 - `write-spec` → approve humano → `approve` → merge worktree na branch mãe.
 - Sem subcomando `execute`.
@@ -37,7 +37,7 @@
 ## 4. Fluxo
 
 ```
-filldocs → jira → confirmar base → branch mãe → write-spec (+ worktree)
+filldocs → jira|task → confirmar base → branch mãe → write-spec (+ worktree)
   → ⏸ approve humano → approve (+ merge) → próxima feature
 ```
 
